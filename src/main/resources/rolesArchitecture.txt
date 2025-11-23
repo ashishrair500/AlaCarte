@@ -1,0 +1,13 @@
+Super Admin
+The Super Admin is a company-side user (typically from the implementation or operations team) responsible for overseeing the onboarding of restaurants onto the platform. This role manages restaurant profiles, updates critical details, and controls which features are enabled or disabled for each restaurant. The Super Admin has the highest level of access and is responsible for ensuring the system runs smoothly across all partner restaurants.​
+
+Admin (Restaurant Owner/Manager)
+The Admin role is assigned to the restaurant owner or manager. This user has full control over their own restaurant’s information within the system. Responsibilities include editing menus, updating restaurant details, managing staff accounts, and configuring operational settings. The Admin ensures that the restaurant’s digital presence is accurate and up-to-date.​
+
+Staff
+Staff members are employees of the restaurant who have limited access to the system. Their primary responsibilities include marking the availability of dishes, updating inventory status, and assisting with day-to-day operations. Staff users can view and update certain menu items or operational details but do not have the authority to make major changes to the restaurant’s profile or settings.​
+
+Customer
+The Customer is the end user who visits the restaurant and places food orders through the platform. Customers can browse menus, place orders, view order status, and provide feedback. This role is read-only for restaurant management features and is designed to provide a seamless ordering experience for diners.​
+
+Each role is designed to ensure proper access control, operational efficiency, and a smooth user experience for both restaurant staff and customers.  
