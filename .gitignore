@@ -3,9 +3,11 @@
 build/
 caches/
 daemon/
+
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+!**/src/main/resources/**
 
 # Maven/Gradle target
 target/
