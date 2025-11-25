@@ -68,5 +68,5 @@ tasks.named('test') {
 
 // Configure Spring Boot plugin
 springBoot {
-    mainClass = 'com.foodbymood.FoodByMoodApplication'
+    mainClass = 'com.alaCarte.FoodByMoodApplication'
 }
