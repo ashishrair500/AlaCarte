@@ -156,7 +156,7 @@ public class JwtUtils {
     }
 
     // Throws runtime exception if invalid or expired. Use parseClaims for more details.
-    private Claims parseClaims(String token) {
+    public Claims parseClaims(String token) {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(key)
