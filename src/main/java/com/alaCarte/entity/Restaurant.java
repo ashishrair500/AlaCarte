@@ -7,12 +7,12 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
  * Entity representing a Restaurant in the database
- * Supports various restaurant types including cafes, fine dining, and hotels
+ * Managed by Super Admin for restaurant onboarding
  */
 @Entity
 @Table(name = "restaurants")
@@ -30,12 +30,6 @@ public class Restaurant {
 
     @Column(columnDefinition = "TEXT")
     private String description;
-
-    @Column(name = "user_name", nullable = false, length = 40)
-    private String userName;
-
-    @Column(name = "password_hash", nullable = false, length = 100)
-    private String password;
 
     // Address fields
     @Column(name = "address_line1", nullable = false, length = 255)
@@ -102,7 +96,7 @@ public class Restaurant {
     private String restaurantType; // cafe, fine_dine, hotel, etc.
 
     @Column(name = "hotel_star_category")
-    private Integer hotelStarCategory; // null for non-hotels
+    private Integer hotelStarCategory;
 
     @Column(name = "service_fee", precision = 10, scale = 2)
     private BigDecimal serviceFee;
@@ -128,38 +122,28 @@ public class Restaurant {
     private String status = "open"; // open, closed, temp_closed
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
+
+    @Column(name = "created_by")
+    private UUID createdBy; // SuperAdmin who created this
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        if (totalRatings == null) {
-            totalRatings = 0;
-        }
-        if (isVegOnly == null) {
-            isVegOnly = false;
-        }
-        if (hasParking == null) {
-            hasParking = false;
-        }
-        if (isPopular == null) {
-            isPopular = false;
-        }
-        if (reservationRequired == null) {
-            reservationRequired = false;
-        }
-        if (status == null) {
-            status = "open";
-        }
+        createdAt = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now();
+        if (totalRatings == null) totalRatings = 0;
+        if (isVegOnly == null) isVegOnly = false;
+        if (hasParking == null) hasParking = false;
+        if (isPopular == null) isPopular = false;
+        if (reservationRequired == null) reservationRequired = false;
+        if (status == null) status = "open";
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = OffsetDateTime.now();
     }
 }
-

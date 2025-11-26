@@ -11,15 +11,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Service class for Restaurant operations
- * Provides business logic for managing restaurants
+ * Service for Restaurant management
+ * Handles business logic for restaurant onboarding and management
  */
 @Service
 public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
 
-    // Constructor injection
     public RestaurantService(RestaurantRepository restaurantRepository) {
         this.restaurantRepository = restaurantRepository;
     }
@@ -28,7 +27,18 @@ public class RestaurantService {
      * Create a new restaurant
      */
     @Transactional
-    public Restaurant createRestaurant(Restaurant restaurant) {
+    public Restaurant createRestaurant(Restaurant restaurant, UUID createdBy) {
+        // Check if restaurant with same name exists
+        if (restaurantRepository.existsByName(restaurant.getName())) {
+            throw new RuntimeException("Restaurant with name '" + restaurant.getName() + "' already exists");
+        }
+
+        // Check if email already exists
+        if (restaurant.getEmail() != null && restaurantRepository.existsByEmail(restaurant.getEmail())) {
+            throw new RuntimeException("Restaurant with email '" + restaurant.getEmail() + "' already exists");
+        }
+
+        restaurant.setCreatedBy(createdBy);
         return restaurantRepository.save(restaurant);
     }
 
@@ -49,7 +59,7 @@ public class RestaurantService {
     /**
      * Search restaurants by name
      */
-    public List<Restaurant> searchRestaurantsByName(String name) {
+    public List<Restaurant> searchByName(String name) {
         return restaurantRepository.findByNameContainingIgnoreCase(name);
     }
 
@@ -61,31 +71,24 @@ public class RestaurantService {
     }
 
     /**
-     * Get restaurants by city and state
+     * Get restaurants by status
      */
-    public List<Restaurant> getRestaurantsByCityAndState(String city, String state) {
-        return restaurantRepository.findByCityAndState(city, state);
+    public List<Restaurant> getRestaurantsByStatus(String status) {
+        return restaurantRepository.findByStatus(status);
     }
 
     /**
-     * Get restaurants by price range (1-3)
+     * Get restaurants by type
      */
-    public List<Restaurant> getRestaurantsByPriceRange(Integer priceRange) {
-        return restaurantRepository.findByPriceRange(priceRange);
+    public List<Restaurant> getRestaurantsByType(String restaurantType) {
+        return restaurantRepository.findByRestaurantType(restaurantType);
     }
 
     /**
-     * Get all vegetarian-only restaurants
+     * Get vegetarian-only restaurants
      */
     public List<Restaurant> getVegOnlyRestaurants() {
         return restaurantRepository.findByIsVegOnlyTrue();
-    }
-
-    /**
-     * Get restaurants with parking
-     */
-    public List<Restaurant> getRestaurantsWithParking() {
-        return restaurantRepository.findByHasParkingTrue();
     }
 
     /**
@@ -96,149 +99,75 @@ public class RestaurantService {
     }
 
     /**
-     * Get restaurants by type (cafe, fine_dine, hotel, etc.)
+     * Get restaurants created by specific SuperAdmin
      */
-    public List<Restaurant> getRestaurantsByType(String restaurantType) {
-        return restaurantRepository.findByRestaurantType(restaurantType);
+    public List<Restaurant> getRestaurantsByCreator(UUID createdBy) {
+        return restaurantRepository.findByCreatedBy(createdBy);
     }
 
     /**
-     * Get open restaurants
+     * Advanced search
      */
-    public List<Restaurant> getOpenRestaurants() {
-        return restaurantRepository.findOpenRestaurants();
+    public List<Restaurant> searchRestaurants(String city, String status, String restaurantType, 
+                                               BigDecimal minRating, String searchTerm) {
+        return restaurantRepository.searchRestaurants(city, status, restaurantType, minRating, searchTerm);
     }
 
     /**
-     * Get restaurants by status
-     */
-    public List<Restaurant> getRestaurantsByStatus(String status) {
-        return restaurantRepository.findByStatus(status);
-    }
-
-    /**
-     * Get restaurants with minimum rating
-     */
-    public List<Restaurant> getRestaurantsByMinRating(BigDecimal minRating) {
-        return restaurantRepository.findByRatingGreaterThanEqual(minRating);
-    }
-
-    /**
-     * Get restaurants by price range and minimum rating
-     */
-    public List<Restaurant> getRestaurantsByPriceRangeAndRating(Integer priceRange, BigDecimal minRating) {
-        return restaurantRepository.findByPriceRangeAndMinRating(priceRange, minRating);
-    }
-
-    /**
-     * Get restaurants by cuisine type
-     */
-    public List<Restaurant> getRestaurantsByCuisine(String cuisine) {
-        return restaurantRepository.findByCuisineType(cuisine);
-    }
-
-    /**
-     * Find restaurants within a geographic area
-     */
-    public List<Restaurant> findRestaurantsInArea(BigDecimal minLat, BigDecimal maxLat, 
-                                                   BigDecimal minLon, BigDecimal maxLon) {
-        return restaurantRepository.findRestaurantsInArea(minLat, maxLat, minLon, maxLon);
-    }
-
-    /**
-     * Get restaurants in a city with minimum rating
-     */
-    public List<Restaurant> getRestaurantsByCityAndMinRating(String city, BigDecimal minRating) {
-        return restaurantRepository.findByCityAndMinRating(city, minRating);
-    }
-
-    /**
-     * Get veg-only restaurants in a city
-     */
-    public List<Restaurant> getVegOnlyRestaurantsByCity(String city) {
-        return restaurantRepository.findVegOnlyRestaurantsByCity(city);
-    }
-
-    /**
-     * Get hotels by star category
-     */
-    public List<Restaurant> getHotelsByStarCategory(Integer starCategory) {
-        return restaurantRepository.findByHotelStarCategory(starCategory);
-    }
-
-    /**
-     * Get restaurants requiring reservation
-     */
-    public List<Restaurant> getRestaurantsRequiringReservation() {
-        return restaurantRepository.findByReservationRequiredTrue();
-    }
-
-    /**
-     * Get popular restaurants by city and cuisine
-     */
-    public List<Restaurant> getPopularRestaurantsByCityAndCuisine(String city, String cuisine) {
-        return restaurantRepository.findPopularRestaurantsByCityAndCuisine(city, cuisine);
-    }
-
-    /**
-     * Get restaurants by average cost for two within range
-     */
-    public List<Restaurant> getRestaurantsByAvgCostRange(BigDecimal minCost, BigDecimal maxCost) {
-        return restaurantRepository.findByAvgCostForTwoBetween(minCost, maxCost);
-    }
-
-    /**
-     * Advanced search with multiple criteria
-     */
-    public List<Restaurant> searchRestaurants(String city, Integer priceRange, 
-                                               BigDecimal minRating, Boolean isVegOnly) {
-        return restaurantRepository.searchRestaurants(city, priceRange, minRating, isVegOnly);
-    }
-
-    /**
-     * Update an existing restaurant
+     * Update restaurant
      */
     @Transactional
     public Restaurant updateRestaurant(UUID id, Restaurant updatedRestaurant) {
         return restaurantRepository.findById(id)
-                .map(existingRestaurant -> {
-                    existingRestaurant.setName(updatedRestaurant.getName());
-                    existingRestaurant.setDescription(updatedRestaurant.getDescription());
-                    existingRestaurant.setAddressLine1(updatedRestaurant.getAddressLine1());
-                    existingRestaurant.setAddressLine2(updatedRestaurant.getAddressLine2());
-                    existingRestaurant.setCity(updatedRestaurant.getCity());
-                    existingRestaurant.setState(updatedRestaurant.getState());
-                    existingRestaurant.setPincode(updatedRestaurant.getPincode());
-                    existingRestaurant.setLatitude(updatedRestaurant.getLatitude());
-                    existingRestaurant.setLongitude(updatedRestaurant.getLongitude());
-                    existingRestaurant.setPhone(updatedRestaurant.getPhone());
-                    existingRestaurant.setEmail(updatedRestaurant.getEmail());
-                    existingRestaurant.setCuisineTypes(updatedRestaurant.getCuisineTypes());
-                    existingRestaurant.setPriceRange(updatedRestaurant.getPriceRange());
-                    existingRestaurant.setAvgCostForTwo(updatedRestaurant.getAvgCostForTwo());
-                    existingRestaurant.setOpeningTime(updatedRestaurant.getOpeningTime());
-                    existingRestaurant.setClosingTime(updatedRestaurant.getClosingTime());
-                    existingRestaurant.setRating(updatedRestaurant.getRating());
-                    existingRestaurant.setTotalRatings(updatedRestaurant.getTotalRatings());
-                    existingRestaurant.setIsVegOnly(updatedRestaurant.getIsVegOnly());
-                    existingRestaurant.setHasParking(updatedRestaurant.getHasParking());
-                    existingRestaurant.setIsPopular(updatedRestaurant.getIsPopular());
-                    existingRestaurant.setRestaurantType(updatedRestaurant.getRestaurantType());
-                    existingRestaurant.setHotelStarCategory(updatedRestaurant.getHotelStarCategory());
-                    existingRestaurant.setServiceFee(updatedRestaurant.getServiceFee());
-                    existingRestaurant.setReservationRequired(updatedRestaurant.getReservationRequired());
-                    existingRestaurant.setDressCode(updatedRestaurant.getDressCode());
-                    existingRestaurant.setMenuQrUrl(updatedRestaurant.getMenuQrUrl());
-                    existingRestaurant.setFeaturedImageUrl(updatedRestaurant.getFeaturedImageUrl());
-                    existingRestaurant.setGalleryImages(updatedRestaurant.getGalleryImages());
-                    existingRestaurant.setStatus(updatedRestaurant.getStatus());
-                    return restaurantRepository.save(existingRestaurant);
+                .map(existing -> {
+                    // Check name conflict
+                    if (!existing.getName().equals(updatedRestaurant.getName()) &&
+                        restaurantRepository.existsByName(updatedRestaurant.getName())) {
+                        throw new RuntimeException("Restaurant name already exists");
+                    }
+
+                    // Check email conflict
+                    if (updatedRestaurant.getEmail() != null &&
+                        !updatedRestaurant.getEmail().equals(existing.getEmail()) &&
+                        restaurantRepository.existsByEmail(updatedRestaurant.getEmail())) {
+                        throw new RuntimeException("Email already exists");
+                    }
+
+                    existing.setName(updatedRestaurant.getName());
+                    existing.setDescription(updatedRestaurant.getDescription());
+                    existing.setAddressLine1(updatedRestaurant.getAddressLine1());
+                    existing.setAddressLine2(updatedRestaurant.getAddressLine2());
+                    existing.setCity(updatedRestaurant.getCity());
+                    existing.setState(updatedRestaurant.getState());
+                    existing.setPincode(updatedRestaurant.getPincode());
+                    existing.setLatitude(updatedRestaurant.getLatitude());
+                    existing.setLongitude(updatedRestaurant.getLongitude());
+                    existing.setPhone(updatedRestaurant.getPhone());
+                    existing.setEmail(updatedRestaurant.getEmail());
+                    existing.setCuisineTypes(updatedRestaurant.getCuisineTypes());
+                    existing.setPriceRange(updatedRestaurant.getPriceRange());
+                    existing.setAvgCostForTwo(updatedRestaurant.getAvgCostForTwo());
+                    existing.setOpeningTime(updatedRestaurant.getOpeningTime());
+                    existing.setClosingTime(updatedRestaurant.getClosingTime());
+                    existing.setIsVegOnly(updatedRestaurant.getIsVegOnly());
+                    existing.setHasParking(updatedRestaurant.getHasParking());
+                    existing.setRestaurantType(updatedRestaurant.getRestaurantType());
+                    existing.setHotelStarCategory(updatedRestaurant.getHotelStarCategory());
+                    existing.setServiceFee(updatedRestaurant.getServiceFee());
+                    existing.setReservationRequired(updatedRestaurant.getReservationRequired());
+                    existing.setDressCode(updatedRestaurant.getDressCode());
+                    existing.setMenuQrUrl(updatedRestaurant.getMenuQrUrl());
+                    existing.setFeaturedImageUrl(updatedRestaurant.getFeaturedImageUrl());
+                    existing.setGalleryImages(updatedRestaurant.getGalleryImages());
+                    existing.setStatus(updatedRestaurant.getStatus());
+
+                    return restaurantRepository.save(existing);
                 })
                 .orElseThrow(() -> new RuntimeException("Restaurant not found with id: " + id));
     }
 
     /**
-     * Partially update restaurant (only non-null fields)
+     * Partial update (patch)
      */
     @Transactional
     public Restaurant patchRestaurant(UUID id, Restaurant updates) {
@@ -248,42 +177,32 @@ public class RestaurantService {
                     if (updates.getDescription() != null) existing.setDescription(updates.getDescription());
                     if (updates.getPhone() != null) existing.setPhone(updates.getPhone());
                     if (updates.getEmail() != null) existing.setEmail(updates.getEmail());
-                    if (updates.getRating() != null) existing.setRating(updates.getRating());
                     if (updates.getStatus() != null) existing.setStatus(updates.getStatus());
                     if (updates.getIsPopular() != null) existing.setIsPopular(updates.getIsPopular());
-                    // Add other fields as needed
+                    if (updates.getRating() != null) existing.setRating(updates.getRating());
+                    if (updates.getFeaturedImageUrl() != null) existing.setFeaturedImageUrl(updates.getFeaturedImageUrl());
+
                     return restaurantRepository.save(existing);
                 })
                 .orElseThrow(() -> new RuntimeException("Restaurant not found with id: " + id));
     }
 
     /**
-     * Delete a restaurant by ID
+     * Delete restaurant
      */
     @Transactional
     public void deleteRestaurant(UUID id) {
+        if (!restaurantRepository.existsById(id)) {
+            throw new RuntimeException("Restaurant not found with id: " + id);
+        }
         restaurantRepository.deleteById(id);
-    }
-
-    /**
-     * Check if a restaurant exists
-     */
-    public boolean restaurantExists(UUID id) {
-        return restaurantRepository.existsById(id);
-    }
-
-    /**
-     * Count total restaurants
-     */
-    public long countRestaurants() {
-        return restaurantRepository.count();
     }
 
     /**
      * Update restaurant status
      */
     @Transactional
-    public Restaurant updateRestaurantStatus(UUID id, String status) {
+    public Restaurant updateStatus(UUID id, String status) {
         return restaurantRepository.findById(id)
                 .map(restaurant -> {
                     restaurant.setStatus(status);
@@ -293,17 +212,36 @@ public class RestaurantService {
     }
 
     /**
-     * Update restaurant rating
+     * Mark as popular
      */
     @Transactional
-    public Restaurant updateRestaurantRating(UUID id, BigDecimal newRating) {
+    public Restaurant togglePopular(UUID id) {
         return restaurantRepository.findById(id)
                 .map(restaurant -> {
-                    restaurant.setRating(newRating);
-                    restaurant.setTotalRatings(restaurant.getTotalRatings() + 1);
+                    restaurant.setIsPopular(!restaurant.getIsPopular());
                     return restaurantRepository.save(restaurant);
                 })
                 .orElseThrow(() -> new RuntimeException("Restaurant not found with id: " + id));
     }
-}
 
+    /**
+     * Check if restaurant exists
+     */
+    public boolean restaurantExists(UUID id) {
+        return restaurantRepository.existsById(id);
+    }
+
+    /**
+     * Count restaurants
+     */
+    public long countRestaurants() {
+        return restaurantRepository.count();
+    }
+
+    /**
+     * Count by status
+     */
+    public long countByStatus(String status) {
+        return restaurantRepository.countByStatus(status);
+    }
+}

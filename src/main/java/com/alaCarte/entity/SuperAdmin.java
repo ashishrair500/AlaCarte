@@ -86,4 +86,3 @@ public class SuperAdmin {
         updatedAt = OffsetDateTime.now();
     }
 }
-

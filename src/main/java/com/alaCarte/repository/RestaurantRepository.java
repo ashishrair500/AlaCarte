@@ -8,11 +8,12 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Repository interface for Restaurant entity
- * Spring Data JPA automatically implements this interface
+ * Repository for Restaurant entity
+ * Used by SuperAdmin to manage restaurant onboarding
  */
 @Repository
 public interface RestaurantRepository extends JpaRepository<Restaurant, UUID> {
@@ -26,81 +27,54 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, UUID> {
     // Find by city and state
     List<Restaurant> findByCityAndState(String city, String state);
 
+    // Find by status
+    List<Restaurant> findByStatus(String status);
+
+    // Find by restaurant type
+    List<Restaurant> findByRestaurantType(String restaurantType);
+
     // Find by price range
     List<Restaurant> findByPriceRange(Integer priceRange);
 
     // Find vegetarian-only restaurants
     List<Restaurant> findByIsVegOnlyTrue();
 
-    // Find restaurants with parking
-    List<Restaurant> findByHasParkingTrue();
-
     // Find popular restaurants
     List<Restaurant> findByIsPopularTrue();
 
-    // Find by restaurant type
-    List<Restaurant> findByRestaurantType(String restaurantType);
-
-    // Find by status
-    List<Restaurant> findByStatus(String status);
-
-    // Find open restaurants
-    @Query("SELECT r FROM Restaurant r WHERE r.status = 'open'")
-    List<Restaurant> findOpenRestaurants();
-
-    // Find restaurants by rating greater than or equal to specified value
+    // Find by minimum rating
     List<Restaurant> findByRatingGreaterThanEqual(BigDecimal rating);
 
-    // Find restaurants within price range and minimum rating
-    @Query("SELECT r FROM Restaurant r WHERE r.priceRange = :priceRange AND r.rating >= :minRating AND r.status = 'open'")
-    List<Restaurant> findByPriceRangeAndMinRating(@Param("priceRange") Integer priceRange, @Param("minRating") BigDecimal minRating);
+    // Find restaurants created by specific SuperAdmin
+    List<Restaurant> findByCreatedBy(UUID createdBy);
 
-    // Find restaurants by cuisine type (uses array contains)
-    @Query(value = "SELECT * FROM restaurants WHERE :cuisine = ANY(cuisine_types)", nativeQuery = true)
-    List<Restaurant> findByCuisineType(@Param("cuisine") String cuisine);
+    // Find by email
+    Optional<Restaurant> findByEmail(String email);
 
-    // Find restaurants within a geographic area (bounding box)
-    @Query(value = "SELECT * FROM restaurants WHERE latitude BETWEEN :minLat AND :maxLat AND longitude BETWEEN :minLon AND :maxLon AND status = 'open'", nativeQuery = true)
-    List<Restaurant> findRestaurantsInArea(
-            @Param("minLat") BigDecimal minLat,
-            @Param("maxLat") BigDecimal maxLat,
-            @Param("minLon") BigDecimal minLon,
-            @Param("maxLon") BigDecimal maxLon
-    );
+    // Check if restaurant with name exists
+    boolean existsByName(String name);
 
-    // Find restaurants by city with minimum rating
-    @Query("SELECT r FROM Restaurant r WHERE r.city = :city AND r.rating >= :minRating AND r.status = 'open' ORDER BY r.rating DESC")
-    List<Restaurant> findByCityAndMinRating(@Param("city") String city, @Param("minRating") BigDecimal minRating);
+    // Check if restaurant with email exists
+    boolean existsByEmail(String email);
 
-    // Find veg-only restaurants in a city
-    @Query("SELECT r FROM Restaurant r WHERE r.city = :city AND r.isVegOnly = true AND r.status = 'open'")
-    List<Restaurant> findVegOnlyRestaurantsByCity(@Param("city") String city);
-
-    // Find hotels by star category
-    List<Restaurant> findByHotelStarCategory(Integer starCategory);
-
-    // Find restaurants requiring reservation
-    List<Restaurant> findByReservationRequiredTrue();
-
-    // Find popular restaurants in a city with specific cuisine
-    @Query(value = "SELECT * FROM restaurants WHERE city = :city AND is_popular = true AND :cuisine = ANY(cuisine_types) AND status = 'open' ORDER BY rating DESC", nativeQuery = true)
-    List<Restaurant> findPopularRestaurantsByCityAndCuisine(@Param("city") String city, @Param("cuisine") String cuisine);
-
-    // Find restaurants by avg cost for two within range
-    List<Restaurant> findByAvgCostForTwoBetween(BigDecimal minCost, BigDecimal maxCost);
-
-    // Search restaurants by multiple criteria
+    // Advanced search
     @Query("SELECT r FROM Restaurant r WHERE " +
-            "(:city IS NULL OR r.city = :city) AND " +
-            "(:priceRange IS NULL OR r.priceRange = :priceRange) AND " +
-            "(:minRating IS NULL OR r.rating >= :minRating) AND " +
-            "(:isVegOnly IS NULL OR r.isVegOnly = :isVegOnly) AND " +
-            "r.status = 'open'")
+           "(:city IS NULL OR r.city = :city) AND " +
+           "(:status IS NULL OR r.status = :status) AND " +
+           "(:restaurantType IS NULL OR r.restaurantType = :restaurantType) AND " +
+           "(:minRating IS NULL OR r.rating >= :minRating) AND " +
+           "(CAST(:searchTerm AS string) IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
     List<Restaurant> searchRestaurants(
             @Param("city") String city,
-            @Param("priceRange") Integer priceRange,
+            @Param("status") String status,
+            @Param("restaurantType") String restaurantType,
             @Param("minRating") BigDecimal minRating,
-            @Param("isVegOnly") Boolean isVegOnly
+            @Param("searchTerm") String searchTerm
     );
-}
 
+    // Count by status
+    long countByStatus(String status);
+
+    // Count by city
+    long countByCity(String city);
+}

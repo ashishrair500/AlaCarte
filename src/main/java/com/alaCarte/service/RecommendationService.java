@@ -16,7 +16,7 @@ public class RecommendationService {
 
     public String getRecommendation(String mood, String preferences) {
         try {
-            String menuText = menuService.getMenuText();
+          //  String menuText = menuService.getMenuText();
             
             String promptText = String.format(
                 "You are a food recommendation assistant. Based on the following menu and the user's mood/preferences, recommend the best food items.\n\n" +
@@ -24,7 +24,7 @@ public class RecommendationService {
                 "User's Mood: %s\n" +
                 "User's Preferences: %s\n\n" +
                 "Please provide a recommendation with reasoning. Keep it concise and friendly.",
-                menuText,
+              //  menuText,
                 mood != null ? mood : "not specified",
                 preferences != null ? preferences : "none"
             );

@@ -4,7 +4,7 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.5'
 }
 
-group = 'com.foodbymood'
+group = 'com.alaCarte'
 version = '1.0.0'
 
 java {
@@ -39,6 +39,10 @@ dependencies {
     // Google Generative AI Java Client
     implementation 'com.google.cloud:google-cloud-aiplatform:3.38.0'
 
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
     // Google HTTP Client for API calls
     implementation 'com.google.api-client:google-api-client:2.2.0'
@@ -51,10 +55,16 @@ dependencies {
     
     // Apache PDFBox for PDF reading
     implementation 'org.apache.pdfbox:pdfbox:3.0.1'
-    
+
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    implementation("org.springframework.boot:spring-boot-starter-security")
+
     // Lombok for reducing boilerplate
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
+
 
     // Spring Boot Starter Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -68,5 +78,5 @@ tasks.named('test') {
 
 // Configure Spring Boot plugin
 springBoot {
-    mainClass = 'com.alaCarte.FoodByMoodApplication'
+    mainClass = 'com.alaCarte.alaCarteApplication'
 }
