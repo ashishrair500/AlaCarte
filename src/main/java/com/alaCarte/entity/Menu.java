@@ -30,7 +30,7 @@ public class Menu {
     private UUID id;
 
     @Column(name = "restaurant_id", nullable = false)
-    private Long restaurantId;
+    private UUID restaurantId;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String name; // e.g., Breakfast, Lunch, Dinner, Bar Menu

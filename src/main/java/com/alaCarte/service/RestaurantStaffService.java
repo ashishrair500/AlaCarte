@@ -66,28 +66,28 @@ public class RestaurantStaffService {
     /**
      * Get all staff by restaurant ID
      */
-    public List<RestaurantStaff> getStaffByRestaurantId(Long restaurantId) {
+    public List<RestaurantStaff> getStaffByRestaurantId(UUID restaurantId) {
         return staffRepository.findByRestaurantId(restaurantId);
     }
 
     /**
      * Get active staff by restaurant ID
      */
-    public List<RestaurantStaff> getActiveStaffByRestaurantId(Long restaurantId) {
+    public List<RestaurantStaff> getActiveStaffByRestaurantId(UUID restaurantId) {
         return staffRepository.findByRestaurantIdAndIsActiveTrue(restaurantId);
     }
 
     /**
      * Get inactive staff by restaurant ID
      */
-    public List<RestaurantStaff> getInactiveStaffByRestaurantId(Long restaurantId) {
+    public List<RestaurantStaff> getInactiveStaffByRestaurantId(UUID restaurantId) {
         return staffRepository.findByRestaurantIdAndIsActiveFalse(restaurantId);
     }
 
     /**
      * Get staff by employee code
      */
-    public Optional<RestaurantStaff> getStaffByEmployeeCode(Long restaurantId, String employeeCode) {
+    public Optional<RestaurantStaff> getStaffByEmployeeCode(UUID restaurantId, String employeeCode) {
         return staffRepository.findByRestaurantIdAndEmployeeCode(restaurantId, employeeCode);
     }
 
@@ -115,28 +115,28 @@ public class RestaurantStaffService {
     /**
      * Get staff by role
      */
-    public List<RestaurantStaff> getStaffByRole(Long restaurantId, String staffRole) {
+    public List<RestaurantStaff> getStaffByRole(UUID restaurantId, String staffRole) {
         return staffRepository.findByRestaurantIdAndStaffRole(restaurantId, staffRole);
     }
 
     /**
      * Get active staff by role
      */
-    public List<RestaurantStaff> getActiveStaffByRole(Long restaurantId, String staffRole) {
+    public List<RestaurantStaff> getActiveStaffByRole(UUID restaurantId, String staffRole) {
         return staffRepository.findActiveByRestaurantIdAndStaffRole(restaurantId, staffRole);
     }
 
     /**
      * Get staff by status
      */
-    public List<RestaurantStaff> getStaffByStatus(Long restaurantId, String status) {
+    public List<RestaurantStaff> getStaffByStatus(UUID restaurantId, String status) {
         return staffRepository.findByRestaurantIdAndStatus(restaurantId, status);
     }
 
     /**
      * Get active staff by status
      */
-    public List<RestaurantStaff> getActiveStaffByStatus(Long restaurantId, String status) {
+    public List<RestaurantStaff> getActiveStaffByStatus(UUID restaurantId, String status) {
         return staffRepository.findActiveByRestaurantIdAndStatus(restaurantId, status);
     }
 
@@ -157,56 +157,56 @@ public class RestaurantStaffService {
     /**
      * Search staff by designation
      */
-    public List<RestaurantStaff> searchByDesignation(Long restaurantId, String designation) {
+    public List<RestaurantStaff> searchByDesignation(UUID restaurantId, String designation) {
         return staffRepository.findByRestaurantIdAndDesignationContainingIgnoreCase(restaurantId, designation);
     }
 
     /**
      * Get staff who joined within a date range
      */
-    public List<RestaurantStaff> getStaffByJoinedDateRange(Long restaurantId, OffsetDateTime startDate, OffsetDateTime endDate) {
+    public List<RestaurantStaff> getStaffByJoinedDateRange(UUID restaurantId, OffsetDateTime startDate, OffsetDateTime endDate) {
         return staffRepository.findByJoinedAtBetween(restaurantId, startDate, endDate);
     }
 
     /**
      * Get staff who left within a date range
      */
-    public List<RestaurantStaff> getStaffByLeftDateRange(Long restaurantId, OffsetDateTime startDate, OffsetDateTime endDate) {
+    public List<RestaurantStaff> getStaffByLeftDateRange(UUID restaurantId, OffsetDateTime startDate, OffsetDateTime endDate) {
         return staffRepository.findByLeftAtBetween(restaurantId, startDate, endDate);
     }
 
     /**
      * Get currently employed staff
      */
-    public List<RestaurantStaff> getCurrentlyEmployedStaff(Long restaurantId) {
+    public List<RestaurantStaff> getCurrentlyEmployedStaff(UUID restaurantId) {
         return staffRepository.findCurrentlyEmployed(restaurantId);
     }
 
     /**
      * Get soft-deleted staff
      */
-    public List<RestaurantStaff> getSoftDeletedStaff(Long restaurantId) {
+    public List<RestaurantStaff> getSoftDeletedStaff(UUID restaurantId) {
         return staffRepository.findSoftDeleted(restaurantId);
     }
 
     /**
      * Get not soft-deleted staff
      */
-    public List<RestaurantStaff> getNotSoftDeletedStaff(Long restaurantId) {
+    public List<RestaurantStaff> getNotSoftDeletedStaff(UUID restaurantId) {
         return staffRepository.findNotSoftDeleted(restaurantId);
     }
 
     /**
      * Find staff by permissions
      */
-    public List<RestaurantStaff> findStaffByPermissions(Long restaurantId, String permissionJson) {
+    public List<RestaurantStaff> findStaffByPermissions(UUID restaurantId, String permissionJson) {
         return staffRepository.findByRestaurantIdAndPermissions(restaurantId, permissionJson);
     }
 
     /**
      * Advanced search with multiple criteria
      */
-    public List<RestaurantStaff> searchStaff(Long restaurantId, Boolean isActive, String status, 
+    public List<RestaurantStaff> searchStaff(UUID restaurantId, Boolean isActive, String status, 
                                               String staffRole, String searchTerm) {
         return staffRepository.searchStaff(restaurantId, isActive, status, staffRole, searchTerm);
     }
@@ -214,7 +214,7 @@ public class RestaurantStaffService {
     /**
      * Get all managers in a restaurant
      */
-    public List<RestaurantStaff> getAllManagers(Long restaurantId) {
+    public List<RestaurantStaff> getAllManagers(UUID restaurantId) {
         return staffRepository.findAllManagers(restaurantId);
     }
 
@@ -228,35 +228,35 @@ public class RestaurantStaffService {
     /**
      * Count staff by restaurant
      */
-    public long countStaffByRestaurant(Long restaurantId) {
+    public long countStaffByRestaurant(UUID restaurantId) {
         return staffRepository.countByRestaurantId(restaurantId);
     }
 
     /**
      * Count active staff by restaurant
      */
-    public long countActiveStaffByRestaurant(Long restaurantId) {
+    public long countActiveStaffByRestaurant(UUID restaurantId) {
         return staffRepository.countByRestaurantIdAndIsActiveTrue(restaurantId);
     }
 
     /**
      * Count by restaurant and status
      */
-    public long countByRestaurantAndStatus(Long restaurantId, String status) {
+    public long countByRestaurantAndStatus(UUID restaurantId, String status) {
         return staffRepository.countByRestaurantIdAndStatus(restaurantId, status);
     }
 
     /**
      * Count by restaurant and role
      */
-    public long countByRestaurantAndRole(Long restaurantId, String staffRole) {
+    public long countByRestaurantAndRole(UUID restaurantId, String staffRole) {
         return staffRepository.countByRestaurantIdAndStaffRole(restaurantId, staffRole);
     }
 
     /**
      * Check if employee code exists
      */
-    public boolean employeeCodeExists(Long restaurantId, String employeeCode) {
+    public boolean employeeCodeExists(UUID restaurantId, String employeeCode) {
         return staffRepository.existsByRestaurantIdAndEmployeeCode(restaurantId, employeeCode);
     }
 

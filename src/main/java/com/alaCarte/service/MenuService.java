@@ -61,21 +61,21 @@ public class MenuService {
     /**
      * Get all menus by restaurant ID
      */
-    public List<Menu> getMenusByRestaurantId(Long restaurantId) {
+    public List<Menu> getMenusByRestaurantId(UUID restaurantId) {
         return menuRepository.findByRestaurantId(restaurantId);
     }
 
     /**
      * Get active menus by restaurant ID
      */
-    public List<Menu> getActiveMenusByRestaurantId(Long restaurantId) {
+    public List<Menu> getActiveMenusByRestaurantId(UUID restaurantId) {
         return menuRepository.findByRestaurantIdAndIsActiveTrue(restaurantId);
     }
 
     /**
      * Get inactive menus by restaurant ID
      */
-    public List<Menu> getInactiveMenusByRestaurantId(Long restaurantId) {
+    public List<Menu> getInactiveMenusByRestaurantId(UUID restaurantId) {
         return menuRepository.findByRestaurantIdAndIsActiveFalse(restaurantId);
     }
 
@@ -89,14 +89,14 @@ public class MenuService {
     /**
      * Get menus by restaurant and menu type
      */
-    public List<Menu> getMenusByRestaurantAndType(Long restaurantId, String menuType) {
+    public List<Menu> getMenusByRestaurantAndType(UUID restaurantId, String menuType) {
         return menuRepository.findByRestaurantIdAndMenuType(restaurantId, menuType);
     }
 
     /**
      * Get active menus by restaurant and menu type
      */
-    public List<Menu> getActiveMenusByRestaurantAndType(Long restaurantId, String menuType) {
+    public List<Menu> getActiveMenusByRestaurantAndType(UUID restaurantId, String menuType) {
         return menuRepository.findActiveByRestaurantIdAndMenuType(restaurantId, menuType);
     }
 
@@ -110,42 +110,42 @@ public class MenuService {
     /**
      * Get menus by restaurant ordered by display order
      */
-    public List<Menu> getMenusByRestaurantOrdered(Long restaurantId) {
+    public List<Menu> getMenusByRestaurantOrdered(UUID restaurantId) {
         return menuRepository.findByRestaurantIdOrderByDisplayOrderAsc(restaurantId);
     }
 
     /**
      * Get active menus by restaurant ordered by display order
      */
-    public List<Menu> getActiveMenusByRestaurantOrdered(Long restaurantId) {
+    public List<Menu> getActiveMenusByRestaurantOrdered(UUID restaurantId) {
         return menuRepository.findActiveByRestaurantIdOrderedByDisplayOrder(restaurantId);
     }
 
     /**
      * Get currently valid menus (based on date range)
      */
-    public List<Menu> getCurrentlyValidMenus(Long restaurantId) {
+    public List<Menu> getCurrentlyValidMenus(UUID restaurantId) {
         return menuRepository.findCurrentlyValidMenus(restaurantId, OffsetDateTime.now());
     }
 
     /**
      * Get seasonal/time-limited menus
      */
-    public List<Menu> getSeasonalMenus(Long restaurantId) {
+    public List<Menu> getSeasonalMenus(UUID restaurantId) {
         return menuRepository.findSeasonalMenus(restaurantId);
     }
 
     /**
      * Get expired menus
      */
-    public List<Menu> getExpiredMenus(Long restaurantId) {
+    public List<Menu> getExpiredMenus(UUID restaurantId) {
         return menuRepository.findExpiredMenus(restaurantId, OffsetDateTime.now());
     }
 
     /**
      * Get upcoming menus (not yet valid)
      */
-    public List<Menu> getUpcomingMenus(Long restaurantId) {
+    public List<Menu> getUpcomingMenus(UUID restaurantId) {
         return menuRepository.findUpcomingMenus(restaurantId, OffsetDateTime.now());
     }
 
@@ -166,21 +166,21 @@ public class MenuService {
     /**
      * Count menus by restaurant
      */
-    public long countMenusByRestaurant(Long restaurantId) {
+    public long countMenusByRestaurant(UUID restaurantId) {
         return menuRepository.countByRestaurantId(restaurantId);
     }
 
     /**
      * Count active menus by restaurant
      */
-    public long countActiveMenusByRestaurant(Long restaurantId) {
+    public long countActiveMenusByRestaurant(UUID restaurantId) {
         return menuRepository.countByRestaurantIdAndIsActiveTrue(restaurantId);
     }
 
     /**
      * Advanced search with multiple criteria
      */
-    public List<Menu> searchMenus(Long restaurantId, Boolean isActive, String menuType, String searchTerm) {
+    public List<Menu> searchMenus(UUID restaurantId, Boolean isActive, String menuType, String searchTerm) {
         return menuRepository.searchMenus(restaurantId, isActive, menuType, searchTerm);
     }
 
@@ -194,7 +194,7 @@ public class MenuService {
     /**
      * Find menus by restaurant and metadata
      */
-    public List<Menu> getMenusByRestaurantAndMeta(Long restaurantId, String metaJson) {
+    public List<Menu> getMenusByRestaurantAndMeta(UUID restaurantId, String metaJson) {
         return menuRepository.findByRestaurantIdAndMeta(restaurantId, metaJson);
     }
 
@@ -336,7 +336,7 @@ public class MenuService {
     /**
      * Check if menu name exists for restaurant
      */
-    public boolean menuNameExists(Long restaurantId, String name) {
+    public boolean menuNameExists(UUID restaurantId, String name) {
         return menuRepository.existsByRestaurantIdAndName(restaurantId, name);
     }
 

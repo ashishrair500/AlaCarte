@@ -3,19 +3,27 @@ package com.alaCarte.superAdmin.controller;
 import com.alaCarte.dto.ApiResponse;
 import com.alaCarte.dto.RestaurantRequest;
 import com.alaCarte.dto.RestaurantResponse;
+import com.alaCarte.dto.RestaurantStaffRequest;
+import com.alaCarte.dto.RestaurantStaffResponse;
 import com.alaCarte.entity.Restaurant;
+import com.alaCarte.entity.RestaurantStaff;
 import com.alaCarte.jwtUtils.JwtUtils;
 import com.alaCarte.middlewares.SuperAdminMiddleware;
 import com.alaCarte.service.RestaurantService;
+import com.alaCarte.service.RestaurantStaffService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static com.alaCarte.enums.UserRoles.RESTAURANT_ADMIN;
 
 /**
  * Controller for SuperAdmin to manage restaurant onboarding and profiles
@@ -27,13 +35,22 @@ import java.util.stream.Collectors;
 public class RestaurantManagementController {
 
     private final RestaurantService restaurantService;
+    private final RestaurantStaffService restaurantStaffService;
     private final JwtUtils jwtUtils;
     private final SuperAdminMiddleware superAdminMiddleware;
+    private final PasswordEncoder passwordEncoder;
 
-    public RestaurantManagementController(RestaurantService restaurantService, JwtUtils jwtUtils, SuperAdminMiddleware middleware) {
+    public RestaurantManagementController(
+            RestaurantService restaurantService,
+            RestaurantStaffService restaurantStaffService,
+            JwtUtils jwtUtils,
+            SuperAdminMiddleware middleware,
+            PasswordEncoder passwordEncoder) {
         this.restaurantService = restaurantService;
+        this.restaurantStaffService = restaurantStaffService;
         this.jwtUtils = jwtUtils;
         this.superAdminMiddleware = middleware;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -75,6 +92,163 @@ public class RestaurantManagementController {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to create restaurant: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Onboard first restaurant admin staff for any restaurant.
+     * POST /api/superadmin/restaurants/staff/onboard-restaurant-admin
+     */
+    @PostMapping("/staff/onboard-restaurant-admin")
+    public ResponseEntity<ApiResponse<RestaurantStaffResponse>> onboardRestaurantAdmin(
+            @Valid @RequestBody RestaurantStaffRequest request,
+            @RequestHeader("Authorization") String token) {
+        try {
+            superAdminMiddleware.validateSuperAdmin(token);
+
+            if (request.getPassword() == null || request.getPassword().isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("Password is required"));
+            }
+
+            RestaurantStaff staff = new RestaurantStaff();
+            staff.setRestaurantId(request.getRestaurantId());
+            staff.setEmployeeCode(request.getEmployeeCode());
+            // Force onboarding role as requested
+            staff.setStaffRole(RESTAURANT_ADMIN.toString());
+            staff.setDesignation(request.getDesignation() != null ? request.getDesignation() : "Restaurant Admin");
+            staff.setReportingTo(request.getReportingTo());
+            staff.setPhone(request.getPhone());
+            staff.setEmail(request.getEmail());
+            staff.setUserName(request.getUserName());
+            staff.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+            staff.setStatus(request.getStatus() != null ? request.getStatus() : "ACTIVE");
+            staff.setJoinedAt(request.getJoinedAt() != null ? request.getJoinedAt() : OffsetDateTime.now());
+            staff.setLeftAt(request.getLeftAt());
+            staff.setShiftMeta(request.getShiftMeta());
+            staff.setPermissions(request.getPermissions());
+            staff.setMeta(request.getMeta());
+            staff.setIsActive(request.getIsActive() != null ? request.getIsActive() : Boolean.TRUE);
+
+            RestaurantStaff saved = restaurantStaffService.createStaff(staff);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Restaurant admin onboarded successfully", mapToStaffResponse(saved)));
+        } catch (io.jsonwebtoken.JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to onboard restaurant admin: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Update restaurant staff
+     * PUT /api/superadmin/restaurants/staff/{id}
+     */
+    @PutMapping("/staff/{id}")
+    public ResponseEntity<ApiResponse<RestaurantStaffResponse>> updateStaff(
+            @PathVariable UUID id,
+            @Valid @RequestBody RestaurantStaffRequest request,
+            @RequestHeader("Authorization") String token) {
+        try {
+            // Validate SuperAdmin access
+            superAdminMiddleware.validateSuperAdmin(token);
+
+            // Convert to Entity
+            RestaurantStaff staffUpdates = new RestaurantStaff();
+            staffUpdates.setRestaurantId(request.getRestaurantId());
+            staffUpdates.setEmployeeCode(request.getEmployeeCode());
+            staffUpdates.setStaffRole(request.getStaffRole());
+            staffUpdates.setDesignation(request.getDesignation());
+            staffUpdates.setReportingTo(request.getReportingTo());
+            staffUpdates.setPhone(request.getPhone());
+            staffUpdates.setEmail(request.getEmail());
+            staffUpdates.setUserName(request.getUserName());
+            staffUpdates.setStatus(request.getStatus());
+            staffUpdates.setJoinedAt(request.getJoinedAt());
+            staffUpdates.setLeftAt(request.getLeftAt());
+            staffUpdates.setShiftMeta(request.getShiftMeta());
+            staffUpdates.setPermissions(request.getPermissions());
+            staffUpdates.setMeta(request.getMeta());
+            staffUpdates.setIsActive(request.getIsActive());
+
+            // Hash password if provided
+            if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+                staffUpdates.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+            }
+
+            RestaurantStaff updatedStaff = restaurantStaffService.updateStaff(id, staffUpdates);
+
+            return ResponseEntity.ok(ApiResponse.success("Staff updated successfully", mapToStaffResponse(updatedStaff)));
+        } catch (io.jsonwebtoken.JwtException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to update staff: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Partial update (patch) restaurant staff
+     * PATCH /api/superadmin/restaurants/staff/{id}
+     */
+    @PatchMapping("/staff/{id}")
+    public ResponseEntity<ApiResponse<RestaurantStaffResponse>> patchStaff(
+            @PathVariable UUID id,
+            @RequestBody RestaurantStaffRequest request,
+            @RequestHeader("Authorization") String token) {
+        try {
+            // Validate SuperAdmin access
+            superAdminMiddleware.validateSuperAdmin(token);
+
+            RestaurantStaff updates = new RestaurantStaff();
+            updates.setRestaurantId(request.getRestaurantId());
+            updates.setEmployeeCode(request.getEmployeeCode());
+            updates.setStaffRole(request.getStaffRole());
+            updates.setDesignation(request.getDesignation());
+            updates.setReportingTo(request.getReportingTo());
+            updates.setPhone(request.getPhone());
+            updates.setEmail(request.getEmail());
+            updates.setUserName(request.getUserName());
+            updates.setStatus(request.getStatus());
+            updates.setJoinedAt(request.getJoinedAt());
+            updates.setLeftAt(request.getLeftAt());
+            updates.setShiftMeta(request.getShiftMeta());
+            updates.setPermissions(request.getPermissions());
+            updates.setMeta(request.getMeta());
+            updates.setIsActive(request.getIsActive());
+
+            // Hash password if provided
+            if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+                updates.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+            }
+
+            RestaurantStaff updatedStaff = restaurantStaffService.patchStaff(id, updates);
+
+            return ResponseEntity.ok(ApiResponse.success("Staff patched successfully", mapToStaffResponse(updatedStaff)));
+        } catch (io.jsonwebtoken.JwtException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to patch staff: " + e.getMessage()));
         }
     }
 
@@ -537,6 +711,30 @@ public class RestaurantManagementController {
                 .createdAt(restaurant.getCreatedAt())
                 .updatedAt(restaurant.getUpdatedAt())
                 .createdBy(restaurant.getCreatedBy())
+                .build();
+    }
+
+    private RestaurantStaffResponse mapToStaffResponse(RestaurantStaff staff) {
+        return RestaurantStaffResponse.builder()
+                .id(staff.getId())
+                .restaurantId(staff.getRestaurantId())
+                .employeeCode(staff.getEmployeeCode())
+                .staffRole(staff.getStaffRole())
+                .designation(staff.getDesignation())
+                .reportingTo(staff.getReportingTo())
+                .phone(staff.getPhone())
+                .email(staff.getEmail())
+                .userName(staff.getUserName())
+                .status(staff.getStatus())
+                .joinedAt(staff.getJoinedAt())
+                .leftAt(staff.getLeftAt())
+                .shiftMeta(staff.getShiftMeta())
+                .permissions(staff.getPermissions())
+                .meta(staff.getMeta())
+                .isActive(staff.getIsActive())
+                .createdAt(staff.getCreatedAt())
+                .updatedAt(staff.getUpdatedAt())
+                .deletedAt(staff.getDeletedAt())
                 .build();
     }
 }

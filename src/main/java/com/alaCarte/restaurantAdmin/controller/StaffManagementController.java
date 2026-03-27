@@ -88,7 +88,7 @@ public class StaffManagementController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<RestaurantStaffResponse>>> getStaffByRestaurant(
-            @RequestParam Long restaurantId,
+            @RequestParam UUID restaurantId,
             @RequestHeader("Authorization") String token) {
         try {
             // Validate RestaurantAdmin access

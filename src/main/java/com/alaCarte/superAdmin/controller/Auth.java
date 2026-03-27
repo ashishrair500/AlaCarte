@@ -22,7 +22,7 @@ import java.util.Optional;
  * Authentication Controller for SuperAdmin
  * Handles login and JWT token generation
  */
-@RestController
+@RestController("superAdminAuthController")
 @RequestMapping("/api/auth/superadmin")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class Auth {
@@ -43,77 +43,81 @@ public class Auth {
      */
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<LoginResponse>> signup(@Valid @RequestBody SignupRequest signupRequest) {
-        try {
+      //  try {
             // Check if username already exists
-            if (superAdminService.usernameExists(signupRequest.getUsername())) {
-                return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
-                        .body(ApiResponse.error("Username already exists"));
-            }
-
-            // Check if email already exists
-            if (superAdminService.emailExists(signupRequest.getEmail())) {
-                return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
-                        .body(ApiResponse.error("Email already exists"));
-            }
-
-            // Create new SuperAdmin
-            SuperAdmin newSuperAdmin = new SuperAdmin();
-            newSuperAdmin.setUsername(signupRequest.getUsername());
-            newSuperAdmin.setFullName(signupRequest.getFullName());
-            newSuperAdmin.setEmail(signupRequest.getEmail());
-            newSuperAdmin.setPhone(signupRequest.getPhone());
-            newSuperAdmin.setRoleLevel(signupRequest.getRoleLevel() != null ? signupRequest.getRoleLevel() : (short) 1);
-            newSuperAdmin.setIsActive(true);
-
-            // Save with encrypted password
-            SuperAdmin savedSuperAdmin = superAdminService.createSuperAdmin(
-                    newSuperAdmin,
-                    signupRequest.getPassword()
-            );
-
-            // Generate tokens
-            String accessToken = jwtUtils.generateToken(
-                    savedSuperAdmin.getUsername(),
-                    savedSuperAdmin.getId(),
-                    Collections.singletonList("ROLE_SUPER_ADMIN"),
-                    createExtraClaims(savedSuperAdmin)
-            );
-
-            String refreshToken = jwtUtils.generateRefreshToken(
-                    savedSuperAdmin.getUsername(),
-                    savedSuperAdmin.getId()
-            );
-
-            // Build response
-            LoginResponse response = LoginResponse.builder()
-                    .userId(savedSuperAdmin.getId())
-                    .username(savedSuperAdmin.getUsername())
-                    .fullName(savedSuperAdmin.getFullName())
-                    .email(savedSuperAdmin.getEmail())
-                    .roleLevel(savedSuperAdmin.getRoleLevel())
-                    .permissions(savedSuperAdmin.getPermissions())
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .tokenType("Bearer")
-                    .expiresIn(86400L) // 24 hours in seconds
-                    .message("Registration successful")
-                    .build();
-
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Registration successful", response));
-
-        } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Registration failed: " + e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Registration failed: " + e.getMessage()));
-        }
+                    .body(ApiResponse.error("Signing up is not allowed"));
+
+//            if (superAdminService.usernameExists(signupRequest.getUsername())) {
+//                return ResponseEntity
+//                        .status(HttpStatus.BAD_REQUEST)
+//                        .body(ApiResponse.error("Username already exists"));
+//            }
+//
+//            // Check if email already exists
+//            if (superAdminService.emailExists(signupRequest.getEmail())) {
+//                return ResponseEntity
+//                        .status(HttpStatus.BAD_REQUEST)
+//                        .body(ApiResponse.error("Email already exists"));
+//            }
+//
+//            // Create new SuperAdmin
+//            SuperAdmin newSuperAdmin = new SuperAdmin();
+//            newSuperAdmin.setUsername(signupRequest.getUsername());
+//            newSuperAdmin.setFullName(signupRequest.getFullName());
+//            newSuperAdmin.setEmail(signupRequest.getEmail());
+//            newSuperAdmin.setPhone(signupRequest.getPhone());
+//            newSuperAdmin.setRoleLevel(signupRequest.getRoleLevel() != null ? signupRequest.getRoleLevel() : (short) 1);
+//            newSuperAdmin.setIsActive(true);
+//
+//            // Save with encrypted password
+//            SuperAdmin savedSuperAdmin = superAdminService.createSuperAdmin(
+//                    newSuperAdmin,
+//                    signupRequest.getPassword()
+//            );
+//
+//            // Generate tokens
+//            String accessToken = jwtUtils.generateToken(
+//                    savedSuperAdmin.getUsername(),
+//                    savedSuperAdmin.getId(),
+//                    Collections.singletonList("ROLE_SUPER_ADMIN"),
+//                    createExtraClaims(savedSuperAdmin)
+//            );
+//
+//            String refreshToken = jwtUtils.generateRefreshToken(
+//                    savedSuperAdmin.getUsername(),
+//                    savedSuperAdmin.getId()
+//            );
+//
+//            // Build response
+//            LoginResponse response = LoginResponse.builder()
+//                    .userId(savedSuperAdmin.getId())
+//                    .username(savedSuperAdmin.getUsername())
+//                    .fullName(savedSuperAdmin.getFullName())
+//                    .email(savedSuperAdmin.getEmail())
+//                    .roleLevel(savedSuperAdmin.getRoleLevel())
+//                    .permissions(savedSuperAdmin.getPermissions())
+//                    .accessToken(accessToken)
+//                    .refreshToken(refreshToken)
+//                    .tokenType("Bearer")
+//                    .expiresIn(86400L) // 24 hours in seconds
+//                    .message("Registration successful")
+//                    .build();
+//
+//            return ResponseEntity
+//                    .status(HttpStatus.CREATED)
+//                    .body(ApiResponse.success("Registration successful", response));
+//
+//        } catch (RuntimeException e) {
+//            return ResponseEntity
+//                    .status(HttpStatus.BAD_REQUEST)
+//                    .body(ApiResponse.error("Registration failed: " + e.getMessage()));
+//        } catch (Exception e) {
+//            return ResponseEntity
+//                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(ApiResponse.error("Registration failed: " + e.getMessage()));
+  //      }
     }
 
     /**

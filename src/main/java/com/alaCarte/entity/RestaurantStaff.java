@@ -28,7 +28,7 @@ public class RestaurantStaff {
 
     // Links
     @Column(name = "restaurant_id", nullable = false)
-    private Long restaurantId;
+    private UUID restaurantId;
 
     // Identification & role
     @Column(name = "employee_code", columnDefinition = "TEXT")
@@ -50,10 +50,10 @@ public class RestaurantStaff {
     @Column(columnDefinition = "TEXT")
     private String email;
 
-    @Column(name = "user_name", length = 40)
+    @Column(name = "user_name", columnDefinition = "TEXT")
     private String userName;
 
-    @Column(name = "password_hash", length = 40)
+    @Column(name = "password_hash", columnDefinition = "TEXT")
     private String passwordHash;
 
     // Employment & status

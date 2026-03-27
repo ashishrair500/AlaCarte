@@ -30,10 +30,10 @@ public class MenuItem {
 
     // Relationships
     @Column(name = "restaurant_id", nullable = false)
-    private Long restaurantId;
+    private UUID restaurantId;
 
     @Column(name = "menu_id", nullable = false)
-    private Long menuId;
+    private UUID menuId;
 
     // Basic Info
     @Column(nullable = false, columnDefinition = "TEXT")

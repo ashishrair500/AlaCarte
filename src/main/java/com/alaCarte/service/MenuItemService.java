@@ -62,70 +62,70 @@ public class MenuItemService {
     /**
      * Get items by restaurant
      */
-    public List<MenuItem> getMenuItemsByRestaurant(Long restaurantId) {
+    public List<MenuItem> getMenuItemsByRestaurant(UUID restaurantId) {
         return menuItemRepository.findByRestaurantId(restaurantId);
     }
 
     /**
      * Get items by menu
      */
-    public List<MenuItem> getMenuItemsByMenu(Long menuId) {
+    public List<MenuItem> getMenuItemsByMenu(UUID menuId) {
         return menuItemRepository.findByMenuId(menuId);
     }
 
     /**
      * Get items by restaurant and menu
      */
-    public List<MenuItem> getMenuItemsByRestaurantAndMenu(Long restaurantId, Long menuId) {
+    public List<MenuItem> getMenuItemsByRestaurantAndMenu(UUID restaurantId, UUID menuId) {
         return menuItemRepository.findByRestaurantIdAndMenuId(restaurantId, menuId);
     }
 
     /**
      * Get available items by menu
      */
-    public List<MenuItem> getAvailableItemsByMenu(Long menuId) {
+    public List<MenuItem> getAvailableItemsByMenu(UUID menuId) {
         return menuItemRepository.findByMenuIdAndIsAvailableTrue(menuId);
     }
 
     /**
      * Get available items by restaurant
      */
-    public List<MenuItem> getAvailableItemsByRestaurant(Long restaurantId) {
+    public List<MenuItem> getAvailableItemsByRestaurant(UUID restaurantId) {
         return menuItemRepository.findByRestaurantIdAndIsAvailableTrue(restaurantId);
     }
 
     /**
      * Get items by category
      */
-    public List<MenuItem> getMenuItemsByCategory(Long menuId, String category) {
+    public List<MenuItem> getMenuItemsByCategory(UUID menuId, String category) {
         return menuItemRepository.findByMenuIdAndCategory(menuId, category);
     }
 
     /**
      * Get vegetarian items
      */
-    public List<MenuItem> getVegetarianItems(Long menuId) {
+    public List<MenuItem> getVegetarianItems(UUID menuId) {
         return menuItemRepository.findByMenuIdAndIsVegTrue(menuId);
     }
 
     /**
      * Get non-vegetarian items
      */
-    public List<MenuItem> getNonVegetarianItems(Long menuId) {
+    public List<MenuItem> getNonVegetarianItems(UUID menuId) {
         return menuItemRepository.findByMenuIdAndIsVegFalse(menuId);
     }
 
     /**
      * Get spicy items
      */
-    public List<MenuItem> getSpicyItems(Long menuId) {
+    public List<MenuItem> getSpicyItems(UUID menuId) {
         return menuItemRepository.findByMenuIdAndIsSpicyTrue(menuId);
     }
 
     /**
      * Get egg-free items
      */
-    public List<MenuItem> getEggFreeItems(Long menuId) {
+    public List<MenuItem> getEggFreeItems(UUID menuId) {
         return menuItemRepository.findByMenuIdAndContainsEggFalse(menuId);
     }
 
@@ -139,77 +139,77 @@ public class MenuItemService {
     /**
      * Search menu items by name in specific menu
      */
-    public List<MenuItem> searchMenuItemsByNameInMenu(Long menuId, String searchTerm) {
+    public List<MenuItem> searchMenuItemsByNameInMenu(UUID menuId, String searchTerm) {
         return menuItemRepository.findByMenuIdAndNameContainingIgnoreCase(menuId, searchTerm);
     }
 
     /**
      * Get items within price range
      */
-    public List<MenuItem> getMenuItemsByPriceRange(Long menuId, BigDecimal minPrice, BigDecimal maxPrice) {
+    public List<MenuItem> getMenuItemsByPriceRange(UUID menuId, BigDecimal minPrice, BigDecimal maxPrice) {
         return menuItemRepository.findByMenuIdAndPriceBetween(menuId, minPrice, maxPrice);
     }
 
     /**
      * Get discounted items
      */
-    public List<MenuItem> getDiscountedItems(Long menuId) {
+    public List<MenuItem> getDiscountedItems(UUID menuId) {
         return menuItemRepository.findDiscountedItems(menuId);
     }
 
     /**
      * Get items by badge
      */
-    public List<MenuItem> getItemsByBadge(Long menuId, String badge) {
+    public List<MenuItem> getItemsByBadge(UUID menuId, String badge) {
         return menuItemRepository.findByMenuIdAndBadge(menuId, badge);
     }
 
     /**
      * Get items ordered by display order
      */
-    public List<MenuItem> getItemsOrderedByDisplayOrder(Long menuId) {
+    public List<MenuItem> getItemsOrderedByDisplayOrder(UUID menuId) {
         return menuItemRepository.findByMenuIdOrderByDisplayOrderAsc(menuId);
     }
 
     /**
      * Get available items ordered by display order
      */
-    public List<MenuItem> getAvailableItemsOrdered(Long menuId) {
+    public List<MenuItem> getAvailableItemsOrdered(UUID menuId) {
         return menuItemRepository.findAvailableItemsOrdered(menuId);
     }
 
     /**
      * Get items by category ordered by display order
      */
-    public List<MenuItem> getItemsByCategoryOrdered(Long menuId, String category) {
+    public List<MenuItem> getItemsByCategoryOrdered(UUID menuId, String category) {
         return menuItemRepository.findByCategoryOrdered(menuId, category);
     }
 
     /**
      * Get soft-deleted items
      */
-    public List<MenuItem> getSoftDeletedItems(Long menuId) {
+    public List<MenuItem> getSoftDeletedItems(UUID menuId) {
         return menuItemRepository.findSoftDeleted(menuId);
     }
 
     /**
      * Get not soft-deleted items
      */
-    public List<MenuItem> getNotSoftDeletedItems(Long menuId) {
+    public List<MenuItem> getNotSoftDeletedItems(UUID menuId) {
         return menuItemRepository.findNotSoftDeleted(menuId);
     }
 
     /**
      * Get items with specific tag
      */
-    public List<MenuItem> getItemsByTag(Long menuId, String tag) {
+    public List<MenuItem> getItemsByTag(UUID menuId, String tag) {
         return menuItemRepository.findByMenuIdAndTag(menuId, tag);
     }
 
     /**
      * Advanced search with multiple criteria
      */
-    public List<MenuItem> searchMenuItems(Long menuId, Boolean isAvailable, Boolean isVeg, 
+    public List<MenuItem> searchMenuItems(UUID menuId, Boolean isAvailable, Boolean isVeg, 
                                           String category, BigDecimal minPrice, BigDecimal maxPrice, 
                                           String searchTerm) {
         return menuItemRepository.searchMenuItems(menuId, isAvailable, isVeg, category, 
@@ -219,70 +219,70 @@ public class MenuItemService {
     /**
      * Get items with nutrition info
      */
-    public List<MenuItem> getItemsWithNutrition(Long menuId) {
+    public List<MenuItem> getItemsWithNutrition(UUID menuId) {
         return menuItemRepository.findItemsWithNutrition(menuId);
     }
 
     /**
      * Get items with variants
      */
-    public List<MenuItem> getItemsWithVariants(Long menuId) {
+    public List<MenuItem> getItemsWithVariants(UUID menuId) {
         return menuItemRepository.findItemsWithVariants(menuId);
     }
 
     /**
      * Get items with addons
      */
-    public List<MenuItem> getItemsWithAddons(Long menuId) {
+    public List<MenuItem> getItemsWithAddons(UUID menuId) {
         return menuItemRepository.findItemsWithAddons(menuId);
     }
 
     /**
      * Get popular items
      */
-    public List<MenuItem> getPopularItems(Long menuId) {
+    public List<MenuItem> getPopularItems(UUID menuId) {
         return menuItemRepository.findPopularItems(menuId);
     }
 
     /**
      * Get new items
      */
-    public List<MenuItem> getNewItems(Long menuId) {
+    public List<MenuItem> getNewItems(UUID menuId) {
         return menuItemRepository.findNewItems(menuId);
     }
 
     /**
      * Get all distinct categories in a menu
      */
-    public List<String> getDistinctCategories(Long menuId) {
+    public List<String> getDistinctCategories(UUID menuId) {
         return menuItemRepository.findDistinctCategoriesByMenuId(menuId);
     }
 
     /**
      * Count items by menu
      */
-    public long countItemsByMenu(Long menuId) {
+    public long countItemsByMenu(UUID menuId) {
         return menuItemRepository.countByMenuId(menuId);
     }
 
     /**
      * Count available items by menu
      */
-    public long countAvailableItemsByMenu(Long menuId) {
+    public long countAvailableItemsByMenu(UUID menuId) {
         return menuItemRepository.countByMenuIdAndIsAvailableTrue(menuId);
     }
 
     /**
      * Count by category
      */
-    public long countByCategory(Long menuId, String category) {
+    public long countByCategory(UUID menuId, String category) {
         return menuItemRepository.countByMenuIdAndCategory(menuId, category);
     }
 
     /**
      * Check if item name exists in menu
      */
-    public boolean itemNameExists(Long menuId, String name) {
+    public boolean itemNameExists(UUID menuId, String name) {
         return menuItemRepository.existsByMenuIdAndName(menuId, name);
     }
 

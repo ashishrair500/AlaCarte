@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
 import java.util.Map;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -15,7 +16,7 @@ import java.util.Map;
 public class MenuRequest {
 
     @NotNull(message = "Restaurant ID is required")
-    private Long restaurantId;
+    private UUID restaurantId;
 
     @NotBlank(message = "Menu name is required")
     private String name;

@@ -18,89 +18,89 @@ import java.util.UUID;
 public interface MenuItemRepository extends JpaRepository<MenuItem, UUID> {
 
     // Find by restaurant
-    List<MenuItem> findByRestaurantId(Long restaurantId);
+    List<MenuItem> findByRestaurantId(UUID restaurantId);
 
     // Find by menu
-    List<MenuItem> findByMenuId(Long menuId);
+    List<MenuItem> findByMenuId(UUID menuId);
 
     // Find by restaurant and menu
-    List<MenuItem> findByRestaurantIdAndMenuId(Long restaurantId, Long menuId);
+    List<MenuItem> findByRestaurantIdAndMenuId(UUID restaurantId, UUID menuId);
 
     // Find available items by menu
-    List<MenuItem> findByMenuIdAndIsAvailableTrue(Long menuId);
+    List<MenuItem> findByMenuIdAndIsAvailableTrue(UUID menuId);
 
     // Find available items by restaurant
-    List<MenuItem> findByRestaurantIdAndIsAvailableTrue(Long restaurantId);
+    List<MenuItem> findByRestaurantIdAndIsAvailableTrue(UUID restaurantId);
 
     // Find by category
-    List<MenuItem> findByMenuIdAndCategory(Long menuId, String category);
+    List<MenuItem> findByMenuIdAndCategory(UUID menuId, String category);
 
     // Find vegetarian items
-    List<MenuItem> findByMenuIdAndIsVegTrue(Long menuId);
+    List<MenuItem> findByMenuIdAndIsVegTrue(UUID menuId);
 
     // Find non-vegetarian items
-    List<MenuItem> findByMenuIdAndIsVegFalse(Long menuId);
+    List<MenuItem> findByMenuIdAndIsVegFalse(UUID menuId);
 
     // Find spicy items
-    List<MenuItem> findByMenuIdAndIsSpicyTrue(Long menuId);
+    List<MenuItem> findByMenuIdAndIsSpicyTrue(UUID menuId);
 
     // Find egg-free items
-    List<MenuItem> findByMenuIdAndContainsEggFalse(Long menuId);
+    List<MenuItem> findByMenuIdAndContainsEggFalse(UUID menuId);
 
     // Find by name containing (case-insensitive)
     List<MenuItem> findByNameContainingIgnoreCase(String name);
 
     // Find by name in a specific menu
-    List<MenuItem> findByMenuIdAndNameContainingIgnoreCase(Long menuId, String name);
+    List<MenuItem> findByMenuIdAndNameContainingIgnoreCase(UUID menuId, String name);
 
     // Find items within price range
-    List<MenuItem> findByMenuIdAndPriceBetween(Long menuId, BigDecimal minPrice, BigDecimal maxPrice);
+    List<MenuItem> findByMenuIdAndPriceBetween(UUID menuId, BigDecimal minPrice, BigDecimal maxPrice);
 
     // Find items with discount
     @Query("SELECT mi FROM MenuItem mi WHERE mi.menuId = :menuId AND mi.discountPrice IS NOT NULL")
-    List<MenuItem> findDiscountedItems(@Param("menuId") Long menuId);
+    List<MenuItem> findDiscountedItems(@Param("menuId") UUID menuId);
 
     // Find items by badge
-    List<MenuItem> findByMenuIdAndBadge(Long menuId, String badge);
+    List<MenuItem> findByMenuIdAndBadge(UUID menuId, String badge);
 
     // Find items ordered by display order
-    List<MenuItem> findByMenuIdOrderByDisplayOrderAsc(Long menuId);
+    List<MenuItem> findByMenuIdOrderByDisplayOrderAsc(UUID menuId);
 
     // Find available items ordered by display order
     @Query("SELECT mi FROM MenuItem mi WHERE mi.menuId = :menuId AND mi.isAvailable = true ORDER BY mi.displayOrder ASC")
-    List<MenuItem> findAvailableItemsOrdered(@Param("menuId") Long menuId);
+    List<MenuItem> findAvailableItemsOrdered(@Param("menuId") UUID menuId);
 
     // Find items by category ordered by display order
     @Query("SELECT mi FROM MenuItem mi WHERE mi.menuId = :menuId AND mi.category = :category ORDER BY mi.displayOrder ASC")
-    List<MenuItem> findByCategoryOrdered(@Param("menuId") Long menuId, @Param("category") String category);
+    List<MenuItem> findByCategoryOrdered(@Param("menuId") UUID menuId, @Param("category") String category);
 
     // Find soft-deleted items
     @Query("SELECT mi FROM MenuItem mi WHERE mi.menuId = :menuId AND mi.deletedAt IS NOT NULL")
-    List<MenuItem> findSoftDeleted(@Param("menuId") Long menuId);
+    List<MenuItem> findSoftDeleted(@Param("menuId") UUID menuId);
 
     // Find not soft-deleted items
     @Query("SELECT mi FROM MenuItem mi WHERE mi.menuId = :menuId AND mi.deletedAt IS NULL")
-    List<MenuItem> findNotSoftDeleted(@Param("menuId") Long menuId);
+    List<MenuItem> findNotSoftDeleted(@Param("menuId") UUID menuId);
 
     // Count items by menu
-    long countByMenuId(Long menuId);
+    long countByMenuId(UUID menuId);
 
     // Count available items by menu
-    long countByMenuIdAndIsAvailableTrue(Long menuId);
+    long countByMenuIdAndIsAvailableTrue(UUID menuId);
 
     // Count by category
-    long countByMenuIdAndCategory(Long menuId, String category);
+    long countByMenuIdAndCategory(UUID menuId, String category);
 
     // Check if item exists by name in menu
-    boolean existsByMenuIdAndName(Long menuId, String name);
+    boolean existsByMenuIdAndName(UUID menuId, String name);
 
     // Get maximum display order for a menu
     @Query("SELECT COALESCE(MAX(mi.displayOrder), 0) FROM MenuItem mi WHERE mi.menuId = :menuId")
-    Integer getMaxDisplayOrder(@Param("menuId") Long menuId);
+    Integer getMaxDisplayOrder(@Param("menuId") UUID menuId);
 
     // Find items with specific tag using array contains
     @Query(value = "SELECT * FROM menu_item WHERE menu_id = :menuId AND :tag = ANY(tags)", nativeQuery = true)
-    List<MenuItem> findByMenuIdAndTag(@Param("menuId") Long menuId, @Param("tag") String tag);
+    List<MenuItem> findByMenuIdAndTag(@Param("menuId") UUID menuId, @Param("tag") String tag);
 
     // Advanced search with multiple criteria
     @Query("SELECT mi FROM MenuItem mi WHERE mi.menuId = :menuId AND " +
@@ -112,7 +112,7 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, UUID> {
            "(CAST(:searchTerm AS string) IS NULL OR LOWER(mi.name) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) AND " +
            "mi.deletedAt IS NULL")
     List<MenuItem> searchMenuItems(
-            @Param("menuId") Long menuId,
+            @Param("menuId") UUID menuId,
             @Param("isAvailable") Boolean isAvailable,
             @Param("isVeg") Boolean isVeg,
             @Param("category") String category,
@@ -123,25 +123,25 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, UUID> {
 
     // Find items with nutrition info
     @Query(value = "SELECT * FROM menu_item WHERE menu_id = :menuId AND nutrition IS NOT NULL AND nutrition != '{}'::jsonb", nativeQuery = true)
-    List<MenuItem> findItemsWithNutrition(@Param("menuId") Long menuId);
+    List<MenuItem> findItemsWithNutrition(@Param("menuId") UUID menuId);
 
     // Find items with variants
     @Query(value = "SELECT * FROM menu_item WHERE menu_id = :menuId AND variants IS NOT NULL AND jsonb_array_length(variants) > 0", nativeQuery = true)
-    List<MenuItem> findItemsWithVariants(@Param("menuId") Long menuId);
+    List<MenuItem> findItemsWithVariants(@Param("menuId") UUID menuId);
 
     // Find items with addons
     @Query(value = "SELECT * FROM menu_item WHERE menu_id = :menuId AND addons IS NOT NULL AND jsonb_array_length(addons) > 0", nativeQuery = true)
-    List<MenuItem> findItemsWithAddons(@Param("menuId") Long menuId);
+    List<MenuItem> findItemsWithAddons(@Param("menuId") UUID menuId);
 
     // Find popular items (could be based on badge or custom logic)
     @Query("SELECT mi FROM MenuItem mi WHERE mi.menuId = :menuId AND mi.badge IN ('Bestseller', 'Chef''s Special', 'Popular') AND mi.isAvailable = true")
-    List<MenuItem> findPopularItems(@Param("menuId") Long menuId);
+    List<MenuItem> findPopularItems(@Param("menuId") UUID menuId);
 
     // Find new items
     @Query("SELECT mi FROM MenuItem mi WHERE mi.menuId = :menuId AND mi.badge = 'New' AND mi.isAvailable = true")
-    List<MenuItem> findNewItems(@Param("menuId") Long menuId);
+    List<MenuItem> findNewItems(@Param("menuId") UUID menuId);
 
     // Get all categories for a menu
     @Query("SELECT DISTINCT mi.category FROM MenuItem mi WHERE mi.menuId = :menuId AND mi.deletedAt IS NULL ORDER BY mi.category")
-    List<String> findDistinctCategoriesByMenuId(@Param("menuId") Long menuId);
+    List<String> findDistinctCategoriesByMenuId(@Param("menuId") UUID menuId);
 }

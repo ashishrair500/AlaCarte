@@ -18,59 +18,59 @@ import java.util.UUID;
 public interface MenuRepository extends JpaRepository<Menu, UUID> {
 
     // Find all menus by restaurant ID
-    List<Menu> findByRestaurantId(Long restaurantId);
+    List<Menu> findByRestaurantId(UUID restaurantId);
 
     // Find active menus by restaurant ID
-    List<Menu> findByRestaurantIdAndIsActiveTrue(Long restaurantId);
+    List<Menu> findByRestaurantIdAndIsActiveTrue(UUID restaurantId);
 
     // Find inactive menus by restaurant ID
-    List<Menu> findByRestaurantIdAndIsActiveFalse(Long restaurantId);
+    List<Menu> findByRestaurantIdAndIsActiveFalse(UUID restaurantId);
 
     // Find by menu type
     List<Menu> findByMenuType(String menuType);
 
     // Find by restaurant and menu type
-    List<Menu> findByRestaurantIdAndMenuType(Long restaurantId, String menuType);
+    List<Menu> findByRestaurantIdAndMenuType(UUID restaurantId, String menuType);
 
     // Find active menus by restaurant and menu type
     @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND m.menuType = :menuType AND m.isActive = true")
-    List<Menu> findActiveByRestaurantIdAndMenuType(@Param("restaurantId") Long restaurantId, @Param("menuType") String menuType);
+    List<Menu> findActiveByRestaurantIdAndMenuType(@Param("restaurantId") UUID restaurantId, @Param("menuType") String menuType);
 
     // Find by name (case-insensitive)
     List<Menu> findByNameContainingIgnoreCase(String name);
 
     // Find menus by restaurant ordered by display order
-    List<Menu> findByRestaurantIdOrderByDisplayOrderAsc(Long restaurantId);
+    List<Menu> findByRestaurantIdOrderByDisplayOrderAsc(UUID restaurantId);
 
     // Find active menus by restaurant ordered by display order
     @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND m.isActive = true ORDER BY m.displayOrder ASC")
-    List<Menu> findActiveByRestaurantIdOrderedByDisplayOrder(@Param("restaurantId") Long restaurantId);
+    List<Menu> findActiveByRestaurantIdOrderedByDisplayOrder(@Param("restaurantId") UUID restaurantId);
 
     // Find currently valid menus (based on date range)
     @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND m.isActive = true AND " +
            "(m.validFrom IS NULL OR m.validFrom <= :now) AND (m.validTo IS NULL OR m.validTo >= :now)")
-    List<Menu> findCurrentlyValidMenus(@Param("restaurantId") Long restaurantId, @Param("now") OffsetDateTime now);
+    List<Menu> findCurrentlyValidMenus(@Param("restaurantId") UUID restaurantId, @Param("now") OffsetDateTime now);
 
     // Find seasonal/time-limited menus
     @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND (m.validFrom IS NOT NULL OR m.validTo IS NOT NULL)")
-    List<Menu> findSeasonalMenus(@Param("restaurantId") Long restaurantId);
+    List<Menu> findSeasonalMenus(@Param("restaurantId") UUID restaurantId);
 
     // Find expired menus
     @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND m.validTo < :now")
-    List<Menu> findExpiredMenus(@Param("restaurantId") Long restaurantId, @Param("now") OffsetDateTime now);
+    List<Menu> findExpiredMenus(@Param("restaurantId") UUID restaurantId, @Param("now") OffsetDateTime now);
 
     // Find upcoming menus (not yet valid)
     @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND m.validFrom > :now")
-    List<Menu> findUpcomingMenus(@Param("restaurantId") Long restaurantId, @Param("now") OffsetDateTime now);
+    List<Menu> findUpcomingMenus(@Param("restaurantId") UUID restaurantId, @Param("now") OffsetDateTime now);
 
     // Check if a menu exists by name and restaurant
-    boolean existsByRestaurantIdAndName(Long restaurantId, String name);
+    boolean existsByRestaurantIdAndName(UUID restaurantId, String name);
 
     // Count menus by restaurant
-    long countByRestaurantId(Long restaurantId);
+    long countByRestaurantId(UUID restaurantId);
 
     // Count active menus by restaurant
-    long countByRestaurantIdAndIsActiveTrue(Long restaurantId);
+    long countByRestaurantIdAndIsActiveTrue(UUID restaurantId);
 
     // Find menus created by a specific user
     List<Menu> findByCreatedBy(UUID createdBy);
@@ -80,7 +80,7 @@ public interface MenuRepository extends JpaRepository<Menu, UUID> {
 
     // Get maximum display order for a restaurant (for adding new menus)
     @Query("SELECT COALESCE(MAX(m.displayOrder), 0) FROM Menu m WHERE m.restaurantId = :restaurantId")
-    Integer getMaxDisplayOrder(@Param("restaurantId") Long restaurantId);
+    Integer getMaxDisplayOrder(@Param("restaurantId") UUID restaurantId);
 
     // Advanced search with multiple criteria
     @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND " +
@@ -88,7 +88,7 @@ public interface MenuRepository extends JpaRepository<Menu, UUID> {
            "(:menuType IS NULL OR m.menuType = :menuType) AND " +
            "(CAST(:searchTerm AS string) IS NULL OR LOWER(m.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
     List<Menu> searchMenus(
-            @Param("restaurantId") Long restaurantId,
+            @Param("restaurantId") UUID restaurantId,
             @Param("isActive") Boolean isActive,
             @Param("menuType") String menuType,
             @Param("searchTerm") String searchTerm
@@ -100,6 +100,6 @@ public interface MenuRepository extends JpaRepository<Menu, UUID> {
 
     // Custom query to find menus with specific metadata using JSONB
     @Query(value = "SELECT * FROM menu WHERE restaurant_id = :restaurantId AND meta @> :metaJson::jsonb", nativeQuery = true)
-    List<Menu> findByRestaurantIdAndMeta(@Param("restaurantId") Long restaurantId, @Param("metaJson") String metaJson);
+    List<Menu> findByRestaurantIdAndMeta(@Param("restaurantId") UUID restaurantId, @Param("metaJson") String metaJson);
 }
 

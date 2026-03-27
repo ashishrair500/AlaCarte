@@ -17,8 +17,8 @@ import java.util.UUID;
 @Builder
 public class MenuItemResponse {
     private UUID id;
-    private Long restaurantId;
-    private Long menuId;
+    private UUID restaurantId;
+    private UUID menuId;
     private String name;
     private String description;
     private String category;

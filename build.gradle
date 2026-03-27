@@ -11,6 +11,8 @@ java {
     sourceCompatibility = '21'
 }
 
+ext['lombok.version'] = '1.18.34'
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
@@ -62,8 +64,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
 
     // Lombok for reducing boilerplate
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
 
 
 

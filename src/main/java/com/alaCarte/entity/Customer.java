@@ -27,7 +27,7 @@ public class Customer {
 
     // Links
     @Column(name = "restaurant_id", nullable = false)
-    private Long restaurantId;
+    private UUID restaurantId;
 
     // Identification
     @Column(unique = true, columnDefinition = "TEXT")

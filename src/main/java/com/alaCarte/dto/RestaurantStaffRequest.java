@@ -16,7 +16,7 @@ import java.util.UUID;
 public class RestaurantStaffRequest {
 
     @NotNull(message = "Restaurant ID is required")
-    private Long restaurantId;
+    private UUID restaurantId;
 
     private String employeeCode;
 

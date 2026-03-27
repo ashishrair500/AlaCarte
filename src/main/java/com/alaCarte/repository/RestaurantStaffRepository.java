@@ -19,16 +19,16 @@ import java.util.UUID;
 public interface RestaurantStaffRepository extends JpaRepository<RestaurantStaff, UUID> {
 
     // Find all staff by restaurant ID
-    List<RestaurantStaff> findByRestaurantId(Long restaurantId);
+    List<RestaurantStaff> findByRestaurantId(UUID restaurantId);
 
     // Find active staff by restaurant ID
-    List<RestaurantStaff> findByRestaurantIdAndIsActiveTrue(Long restaurantId);
+    List<RestaurantStaff> findByRestaurantIdAndIsActiveTrue(UUID restaurantId);
 
     // Find inactive staff by restaurant ID
-    List<RestaurantStaff> findByRestaurantIdAndIsActiveFalse(Long restaurantId);
+    List<RestaurantStaff> findByRestaurantIdAndIsActiveFalse(UUID restaurantId);
 
     // Find by employee code
-    Optional<RestaurantStaff> findByRestaurantIdAndEmployeeCode(Long restaurantId, String employeeCode);
+    Optional<RestaurantStaff> findByRestaurantIdAndEmployeeCode(UUID restaurantId, String employeeCode);
 
     // Find by username
     Optional<RestaurantStaff> findByUserName(String userName);
@@ -41,18 +41,18 @@ public interface RestaurantStaffRepository extends JpaRepository<RestaurantStaff
     Optional<RestaurantStaff> findByUsernameOrEmail(@Param("usernameOrEmail") String usernameOrEmail);
 
     // Find by staff role
-    List<RestaurantStaff> findByRestaurantIdAndStaffRole(Long restaurantId, String staffRole);
+    List<RestaurantStaff> findByRestaurantIdAndStaffRole(UUID restaurantId, String staffRole);
 
     // Find active staff by role
     @Query("SELECT rs FROM RestaurantStaff rs WHERE rs.restaurantId = :restaurantId AND rs.staffRole = :staffRole AND rs.isActive = true")
-    List<RestaurantStaff> findActiveByRestaurantIdAndStaffRole(@Param("restaurantId") Long restaurantId, @Param("staffRole") String staffRole);
+    List<RestaurantStaff> findActiveByRestaurantIdAndStaffRole(@Param("restaurantId") UUID restaurantId, @Param("staffRole") String staffRole);
 
     // Find by status
-    List<RestaurantStaff> findByRestaurantIdAndStatus(Long restaurantId, String status);
+    List<RestaurantStaff> findByRestaurantIdAndStatus(UUID restaurantId, String status);
 
     // Find active staff with specific status
     @Query("SELECT rs FROM RestaurantStaff rs WHERE rs.restaurantId = :restaurantId AND rs.status = :status AND rs.isActive = true")
-    List<RestaurantStaff> findActiveByRestaurantIdAndStatus(@Param("restaurantId") Long restaurantId, @Param("status") String status);
+    List<RestaurantStaff> findActiveByRestaurantIdAndStatus(@Param("restaurantId") UUID restaurantId, @Param("status") String status);
 
     // Find staff reporting to a specific manager
     List<RestaurantStaff> findByReportingTo(UUID reportingTo);
@@ -62,10 +62,10 @@ public interface RestaurantStaffRepository extends JpaRepository<RestaurantStaff
     List<RestaurantStaff> findActiveByReportingTo(@Param("reportingTo") UUID reportingTo);
 
     // Find by designation
-    List<RestaurantStaff> findByRestaurantIdAndDesignationContainingIgnoreCase(Long restaurantId, String designation);
+    List<RestaurantStaff> findByRestaurantIdAndDesignationContainingIgnoreCase(UUID restaurantId, String designation);
 
     // Check if employee code exists for a restaurant
-    boolean existsByRestaurantIdAndEmployeeCode(Long restaurantId, String employeeCode);
+    boolean existsByRestaurantIdAndEmployeeCode(UUID restaurantId, String employeeCode);
 
     // Check if username exists
     boolean existsByUserName(String userName);
@@ -74,44 +74,44 @@ public interface RestaurantStaffRepository extends JpaRepository<RestaurantStaff
     boolean existsByEmail(String email);
 
     // Count staff by restaurant
-    long countByRestaurantId(Long restaurantId);
+    long countByRestaurantId(UUID restaurantId);
 
     // Count active staff by restaurant
-    long countByRestaurantIdAndIsActiveTrue(Long restaurantId);
+    long countByRestaurantIdAndIsActiveTrue(UUID restaurantId);
 
     // Count by restaurant and status
-    long countByRestaurantIdAndStatus(Long restaurantId, String status);
+    long countByRestaurantIdAndStatus(UUID restaurantId, String status);
 
     // Count by restaurant and role
-    long countByRestaurantIdAndStaffRole(Long restaurantId, String staffRole);
+    long countByRestaurantIdAndStaffRole(UUID restaurantId, String staffRole);
 
     // Find staff who joined within a date range
     @Query("SELECT rs FROM RestaurantStaff rs WHERE rs.restaurantId = :restaurantId AND rs.joinedAt BETWEEN :startDate AND :endDate")
-    List<RestaurantStaff> findByJoinedAtBetween(@Param("restaurantId") Long restaurantId, 
+    List<RestaurantStaff> findByJoinedAtBetween(@Param("restaurantId") UUID restaurantId, 
                                                  @Param("startDate") OffsetDateTime startDate, 
                                                  @Param("endDate") OffsetDateTime endDate);
 
     // Find staff who left within a date range
     @Query("SELECT rs FROM RestaurantStaff rs WHERE rs.restaurantId = :restaurantId AND rs.leftAt BETWEEN :startDate AND :endDate")
-    List<RestaurantStaff> findByLeftAtBetween(@Param("restaurantId") Long restaurantId, 
+    List<RestaurantStaff> findByLeftAtBetween(@Param("restaurantId") UUID restaurantId, 
                                                @Param("startDate") OffsetDateTime startDate, 
                                                @Param("endDate") OffsetDateTime endDate);
 
     // Find currently employed staff (joined but not left)
     @Query("SELECT rs FROM RestaurantStaff rs WHERE rs.restaurantId = :restaurantId AND rs.joinedAt IS NOT NULL AND rs.leftAt IS NULL AND rs.isActive = true")
-    List<RestaurantStaff> findCurrentlyEmployed(@Param("restaurantId") Long restaurantId);
+    List<RestaurantStaff> findCurrentlyEmployed(@Param("restaurantId") UUID restaurantId);
 
     // Find soft-deleted staff
     @Query("SELECT rs FROM RestaurantStaff rs WHERE rs.restaurantId = :restaurantId AND rs.deletedAt IS NOT NULL")
-    List<RestaurantStaff> findSoftDeleted(@Param("restaurantId") Long restaurantId);
+    List<RestaurantStaff> findSoftDeleted(@Param("restaurantId") UUID restaurantId);
 
     // Find not soft-deleted staff
     @Query("SELECT rs FROM RestaurantStaff rs WHERE rs.restaurantId = :restaurantId AND rs.deletedAt IS NULL")
-    List<RestaurantStaff> findNotSoftDeleted(@Param("restaurantId") Long restaurantId);
+    List<RestaurantStaff> findNotSoftDeleted(@Param("restaurantId") UUID restaurantId);
 
     // Custom query to find staff with specific permissions using JSONB
     @Query(value = "SELECT * FROM restaurant_staff WHERE restaurant_id = :restaurantId AND permissions @> :permissionJson::jsonb AND is_active = true", nativeQuery = true)
-    List<RestaurantStaff> findByRestaurantIdAndPermissions(@Param("restaurantId") Long restaurantId, @Param("permissionJson") String permissionJson);
+    List<RestaurantStaff> findByRestaurantIdAndPermissions(@Param("restaurantId") UUID restaurantId, @Param("permissionJson") String permissionJson);
 
     // Advanced search with multiple criteria
     @Query("SELECT rs FROM RestaurantStaff rs WHERE rs.restaurantId = :restaurantId AND " +
@@ -123,7 +123,7 @@ public interface RestaurantStaffRepository extends JpaRepository<RestaurantStaff
            "LOWER(rs.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
            "LOWER(rs.employeeCode) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
     List<RestaurantStaff> searchStaff(
-            @Param("restaurantId") Long restaurantId,
+            @Param("restaurantId") UUID restaurantId,
             @Param("isActive") Boolean isActive,
             @Param("status") String status,
             @Param("staffRole") String staffRole,
@@ -133,7 +133,7 @@ public interface RestaurantStaffRepository extends JpaRepository<RestaurantStaff
     // Find all managers (staff with direct reports)
     @Query("SELECT DISTINCT rs FROM RestaurantStaff rs WHERE rs.id IN " +
            "(SELECT DISTINCT rs2.reportingTo FROM RestaurantStaff rs2 WHERE rs2.reportingTo IS NOT NULL AND rs2.restaurantId = :restaurantId)")
-    List<RestaurantStaff> findAllManagers(@Param("restaurantId") Long restaurantId);
+    List<RestaurantStaff> findAllManagers(@Param("restaurantId") UUID restaurantId);
 
     // Get staff hierarchy (team members under a manager)
     @Query("SELECT rs FROM RestaurantStaff rs WHERE rs.reportingTo = :managerId AND rs.isActive = true ORDER BY rs.staffRole, rs.userName")

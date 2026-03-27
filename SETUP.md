@@ -115,4 +115,3 @@ The application uses **Spring Data JPA** with **PostgreSQL**:
 - **Authentication failed**: Check username/password in `application.properties`
 - **Database does not exist**: Create the database using `CREATE DATABASE menuagent;`
 - **Port 5432 in use**: Another PostgreSQL instance might be running. Change the port or stop other instances.
-

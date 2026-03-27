@@ -78,7 +78,7 @@ public class MenuItemManagementController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<MenuItemResponse>>> getMenuItemsByMenu(
-            @RequestParam Long menuId,
+            @RequestParam UUID menuId,
             @RequestHeader("Authorization") String token) {
         try {
             // Validate RestaurantAdmin access

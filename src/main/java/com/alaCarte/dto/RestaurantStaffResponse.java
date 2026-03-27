@@ -15,7 +15,7 @@ import java.util.UUID;
 @Builder
 public class RestaurantStaffResponse {
     private UUID id;
-    private Long restaurantId;
+    private UUID restaurantId;
     private String employeeCode;
     private String staffRole;
     private String designation;
