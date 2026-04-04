@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,14 +33,15 @@ public class MenuItemService {
     @Transactional
     public MenuItem createMenuItem(MenuItem menuItem) {
         // Check if item with same name already exists in this menu
-        if (menuItemRepository.existsByMenuIdAndName(menuItem.getMenuId(), menuItem.getName())) {
+        UUID menuId = requireMenuId(menuItem);
+        if (menuItemRepository.existsByMenuIdAndName(menuId, menuItem.getName())) {
             throw new RuntimeException("Menu item with name '" + menuItem.getName() + "' already exists in this menu");
         }
         
         // Auto-assign display order if not provided
         if (menuItem.getDisplayOrder() == null || menuItem.getDisplayOrder() == 0) {
-            Integer maxOrder = menuItemRepository.getMaxDisplayOrder(menuItem.getMenuId());
-            menuItem.setDisplayOrder(maxOrder + 1);
+            Short maxOrder = menuItemRepository.getMaxDisplayOrder(menuId);
+            menuItem.setDisplayOrder((short) (maxOrder + 1));
         }
         
         return menuItemRepository.save(menuItem);
@@ -56,16 +56,16 @@ public class MenuItemService {
             throw new RuntimeException("At least one menu item is required for bulk upload");
         }
 
-        UUID menuId = menuItems.get(0).getMenuId();
-        UUID restaurantId = menuItems.get(0).getRestaurantId();
+        UUID menuId = requireMenuId(menuItems.get(0));
+        UUID restaurantId = requireRestaurantId(menuItems.get(0));
         Set<String> itemNamesInRequest = new HashSet<>();
 
         for (MenuItem menuItem : menuItems) {
-            if (!menuId.equals(menuItem.getMenuId())) {
+            if (!menuId.equals(requireMenuId(menuItem))) {
                 throw new RuntimeException("All menu items in a bulk upload must belong to the same menu");
             }
 
-            if (!restaurantId.equals(menuItem.getRestaurantId())) {
+            if (!restaurantId.equals(requireRestaurantId(menuItem))) {
                 throw new RuntimeException("All menu items in a bulk upload must belong to the same restaurant");
             }
 
@@ -74,15 +74,15 @@ public class MenuItemService {
                 throw new RuntimeException("Duplicate menu item name '" + menuItem.getName() + "' found in bulk upload request");
             }
 
-            if (menuItemRepository.existsByMenuIdAndName(menuItem.getMenuId(), menuItem.getName())) {
+            if (menuItemRepository.existsByMenuIdAndName(menuId, menuItem.getName())) {
                 throw new RuntimeException("Menu item with name '" + menuItem.getName() + "' already exists in this menu");
             }
         }
 
-        int nextDisplayOrder = menuItemRepository.getMaxDisplayOrder(menuId);
+        short nextDisplayOrder = menuItemRepository.getMaxDisplayOrder(menuId);
         for (MenuItem menuItem : menuItems) {
             if (menuItem.getDisplayOrder() == null || menuItem.getDisplayOrder() == 0) {
-                nextDisplayOrder += 1;
+                nextDisplayOrder++;
                 menuItem.setDisplayOrder(nextDisplayOrder);
             }
         }
@@ -341,30 +341,44 @@ public class MenuItemService {
                     // Check if name is being changed and if it conflicts
                     if (!existingItem.getName().equals(updatedItem.getName())) {
                         if (menuItemRepository.existsByMenuIdAndName(
-                                existingItem.getMenuId(), updatedItem.getName())) {
+                                requireMenuId(existingItem), updatedItem.getName())) {
                             throw new RuntimeException("Menu item with name '" + updatedItem.getName() + 
                                     "' already exists in this menu");
                         }
                     }
                     
+                    existingItem.setRestaurant(updatedItem.getRestaurant());
+                    existingItem.setMenu(updatedItem.getMenu());
+                    existingItem.setCategory(updatedItem.getCategory());
                     existingItem.setName(updatedItem.getName());
                     existingItem.setDescription(updatedItem.getDescription());
-                    existingItem.setCategory(updatedItem.getCategory());
-                    existingItem.setPrice(updatedItem.getPrice());
+                    existingItem.setAiDescription(updatedItem.getAiDescription());
+                    existingItem.setBasePrice(updatedItem.getBasePrice());
                     existingItem.setDiscountPrice(updatedItem.getDiscountPrice());
                     existingItem.setIsAvailable(updatedItem.getIsAvailable());
                     existingItem.setIsVeg(updatedItem.getIsVeg());
+                    existingItem.setIsVegan(updatedItem.getIsVegan());
                     existingItem.setIsSpicy(updatedItem.getIsSpicy());
                     existingItem.setContainsEgg(updatedItem.getContainsEgg());
-                    existingItem.setVariants(updatedItem.getVariants());
-                    existingItem.setAddons(updatedItem.getAddons());
-                    existingItem.setTags(updatedItem.getTags());
+                    existingItem.setContainsGluten(updatedItem.getContainsGluten());
+                    existingItem.setContainsNuts(updatedItem.getContainsNuts());
+                    existingItem.setContainsDairy(updatedItem.getContainsDairy());
+                    existingItem.setSpiceLevel(updatedItem.getSpiceLevel());
+                    existingItem.setPrepTimeMinutes(updatedItem.getPrepTimeMinutes());
                     existingItem.setImageUrl(updatedItem.getImageUrl());
                     existingItem.setGallery(updatedItem.getGallery());
                     existingItem.setNutrition(updatedItem.getNutrition());
+                    existingItem.setIngredients(updatedItem.getIngredients());
+                    existingItem.setCuisineType(updatedItem.getCuisineType());
+                    existingItem.setCourseType(updatedItem.getCourseType());
                     existingItem.setDisplayOrder(updatedItem.getDisplayOrder());
                     existingItem.setBadge(updatedItem.getBadge());
+                    existingItem.setHasVariants(updatedItem.getHasVariants());
+                    existingItem.setHasAddons(updatedItem.getHasAddons());
                     existingItem.setMeta(updatedItem.getMeta());
+                    existingItem.setCreatedBy(updatedItem.getCreatedBy());
+                    existingItem.setUpdatedBy(updatedItem.getUpdatedBy());
+                    existingItem.setDeleted(updatedItem.getDeleted());
                     
                     return menuItemRepository.save(existingItem);
                 })
@@ -381,30 +395,44 @@ public class MenuItemService {
                     if (updates.getName() != null) {
                         if (!existing.getName().equals(updates.getName())) {
                             if (menuItemRepository.existsByMenuIdAndName(
-                                    existing.getMenuId(), updates.getName())) {
+                                    requireMenuId(existing), updates.getName())) {
                                 throw new RuntimeException("Menu item with name '" + updates.getName() + 
                                         "' already exists in this menu");
                             }
                         }
                         existing.setName(updates.getName());
                     }
-                    if (updates.getDescription() != null) existing.setDescription(updates.getDescription());
+                    if (updates.getRestaurant() != null) existing.setRestaurant(updates.getRestaurant());
+                    if (updates.getMenu() != null) existing.setMenu(updates.getMenu());
                     if (updates.getCategory() != null) existing.setCategory(updates.getCategory());
-                    if (updates.getPrice() != null) existing.setPrice(updates.getPrice());
+                    if (updates.getDescription() != null) existing.setDescription(updates.getDescription());
+                    if (updates.getAiDescription() != null) existing.setAiDescription(updates.getAiDescription());
+                    if (updates.getBasePrice() != null) existing.setBasePrice(updates.getBasePrice());
                     if (updates.getDiscountPrice() != null) existing.setDiscountPrice(updates.getDiscountPrice());
                     if (updates.getIsAvailable() != null) existing.setIsAvailable(updates.getIsAvailable());
                     if (updates.getIsVeg() != null) existing.setIsVeg(updates.getIsVeg());
+                    if (updates.getIsVegan() != null) existing.setIsVegan(updates.getIsVegan());
                     if (updates.getIsSpicy() != null) existing.setIsSpicy(updates.getIsSpicy());
                     if (updates.getContainsEgg() != null) existing.setContainsEgg(updates.getContainsEgg());
-                    if (updates.getVariants() != null) existing.setVariants(updates.getVariants());
-                    if (updates.getAddons() != null) existing.setAddons(updates.getAddons());
-                    if (updates.getTags() != null) existing.setTags(updates.getTags());
+                    if (updates.getContainsGluten() != null) existing.setContainsGluten(updates.getContainsGluten());
+                    if (updates.getContainsNuts() != null) existing.setContainsNuts(updates.getContainsNuts());
+                    if (updates.getContainsDairy() != null) existing.setContainsDairy(updates.getContainsDairy());
+                    if (updates.getSpiceLevel() != null) existing.setSpiceLevel(updates.getSpiceLevel());
+                    if (updates.getPrepTimeMinutes() != null) existing.setPrepTimeMinutes(updates.getPrepTimeMinutes());
                     if (updates.getImageUrl() != null) existing.setImageUrl(updates.getImageUrl());
                     if (updates.getGallery() != null) existing.setGallery(updates.getGallery());
                     if (updates.getNutrition() != null) existing.setNutrition(updates.getNutrition());
+                    if (updates.getIngredients() != null) existing.setIngredients(updates.getIngredients());
+                    if (updates.getCuisineType() != null) existing.setCuisineType(updates.getCuisineType());
+                    if (updates.getCourseType() != null) existing.setCourseType(updates.getCourseType());
                     if (updates.getDisplayOrder() != null) existing.setDisplayOrder(updates.getDisplayOrder());
                     if (updates.getBadge() != null) existing.setBadge(updates.getBadge());
+                    if (updates.getHasVariants() != null) existing.setHasVariants(updates.getHasVariants());
+                    if (updates.getHasAddons() != null) existing.setHasAddons(updates.getHasAddons());
                     if (updates.getMeta() != null) existing.setMeta(updates.getMeta());
+                    if (updates.getCreatedBy() != null) existing.setCreatedBy(updates.getCreatedBy());
+                    if (updates.getUpdatedBy() != null) existing.setUpdatedBy(updates.getUpdatedBy());
+                    if (updates.getDeleted() != null) existing.setDeleted(updates.getDeleted());
                     
                     return menuItemRepository.save(existing);
                 })
@@ -420,13 +448,13 @@ public class MenuItemService {
     }
 
     /**
-     * Soft delete - mark as deleted with timestamp
+     * Soft delete - mark as deleted using the deleted flag
      */
     @Transactional
     public MenuItem softDeleteMenuItem(UUID id) {
         return menuItemRepository.findById(id)
                 .map(menuItem -> {
-                    menuItem.setDeletedAt(OffsetDateTime.now());
+                    menuItem.setDeleted((short) 1);
                     menuItem.setIsAvailable(false);
                     return menuItemRepository.save(menuItem);
                 })
@@ -440,7 +468,7 @@ public class MenuItemService {
     public MenuItem restoreMenuItem(UUID id) {
         return menuItemRepository.findById(id)
                 .map(menuItem -> {
-                    menuItem.setDeletedAt(null);
+                    menuItem.setDeleted((short) 0);
                     return menuItemRepository.save(menuItem);
                 })
                 .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + id));
@@ -479,7 +507,7 @@ public class MenuItemService {
     public MenuItem updateDisplayOrder(UUID id, Integer newOrder) {
         return menuItemRepository.findById(id)
                 .map(menuItem -> {
-                    menuItem.setDisplayOrder(newOrder);
+                    menuItem.setDisplayOrder(newOrder.shortValue());
                     return menuItemRepository.save(menuItem);
                 })
                 .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + id));
@@ -510,6 +538,20 @@ public class MenuItemService {
      */
     public long countMenuItems() {
         return menuItemRepository.count();
+    }
+
+    private UUID requireMenuId(MenuItem menuItem) {
+        if (menuItem.getMenu() == null || menuItem.getMenu().getId() == null) {
+            throw new RuntimeException("Menu reference is required on MenuItem");
+        }
+        return menuItem.getMenu().getId();
+    }
+
+    private UUID requireRestaurantId(MenuItem menuItem) {
+        if (menuItem.getRestaurant() == null || menuItem.getRestaurant().getId() == null) {
+            throw new RuntimeException("Restaurant reference is required on MenuItem");
+        }
+        return menuItem.getRestaurant().getId();
     }
 }
 
