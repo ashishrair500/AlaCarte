@@ -10,35 +10,155 @@ This API allows Restaurant Admins to manage menus, menu items, and staff members
 ---
 
 ## Table of Contents
-1. [Menu Management](#menu-management)
-    - [Create Menu](#1-create-menu)
-    - [Get All Menus](#2-get-all-menus)
-    - [Get Menu by ID](#3-get-menu-by-id)
-    - [Update Menu](#4-update-menu)
-    - [Patch Menu](#5-patch-menu)
-    - [Delete Menu](#6-delete-menu)
-2. [Menu Item Management](#menu-item-management)
-    - [Create Menu Item](#7-create-menu-item)
-    - [Get Menu Items by Menu](#8-get-menu-items-by-menu)
-    - [Get Menu Item by ID](#9-get-menu-item-by-id)
-    - [Update Menu Item](#10-update-menu-item)
-    - [Patch Menu Item](#11-patch-menu-item)
-    - [Delete Menu Item](#12-delete-menu-item)
-    - [Toggle Availability](#13-toggle-availability)
-3. [Staff Management](#staff-management)
-    - [Create Staff](#14-create-staff)
-    - [Get All Staff](#15-get-all-staff)
-    - [Get Staff by ID](#16-get-staff-by-id)
-    - [Update Staff](#17-update-staff)
-    - [Patch Staff](#18-patch-staff)
-    - [Delete Staff](#19-delete-staff)
-    - [Update Staff Status](#20-update-staff-status)
+1. [Authentication](#authentication)
+    - [Login](#1-login)
+    - [Refresh Token](#2-refresh-token)
+    - [Validate Token](#3-validate-token)
+    - [Get Current User](#4-get-current-user)
+2. [Menu Management](#menu-management)
+    - [Create Menu](#5-create-menu)
+    - [Get All Menus](#6-get-all-menus)
+    - [Get Menu by ID](#7-get-menu-by-id)
+    - [Update Menu](#8-update-menu)
+    - [Patch Menu](#9-patch-menu)
+    - [Delete Menu](#10-delete-menu)
+3. [Menu Item Management](#menu-item-management)
+    - [Create Menu Item](#11-create-menu-item)
+    - [Bulk Create Menu Items](#12-bulk-create-menu-items)
+    - [Get Menu Items by Menu](#13-get-menu-items-by-menu)
+    - [Get Menu Item by ID](#14-get-menu-item-by-id)
+    - [Update Menu Item](#15-update-menu-item)
+    - [Patch Menu Item](#16-patch-menu-item)
+    - [Delete Menu Item](#17-delete-menu-item)
+    - [Toggle Availability](#18-toggle-availability)
+4. [Staff Management](#staff-management)
+    - [Create Staff](#19-create-staff)
+    - [Get All Staff](#20-get-all-staff)
+    - [Get Staff by ID](#21-get-staff-by-id)
+    - [Update Staff](#22-update-staff)
+    - [Patch Staff](#23-patch-staff)
+    - [Delete Staff](#24-delete-staff)
+    - [Update Staff Status](#25-update-staff-status)
+
+---
+
+## Authentication
+
+### 1. Login
+
+**Endpoint**: `POST /api/auth/restaurant-admin/login`
+
+**Description**: Authenticate a restaurant admin and receive access and refresh tokens.
+
+**Request Body**:
+```json
+{
+  "usernameOrEmail": "admin_user",
+  "password": "securePassword123"
+}
+```
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "userId": "c3d4e5f6-a7b8-9012-3456-789012cdefgh",
+    "username": "admin_user",
+    "fullName": "Manager",
+    "email": "admin@example.com",
+    "permissions": ["CAN_MANAGE_MENU", "CAN_MANAGE_STAFF"],
+    "accessToken": "eyJhbGciOi...",
+    "refreshToken": "def50200...",
+    "tokenType": "Bearer",
+    "expiresIn": 86400
+  }
+}
+```
+
+### 2. Refresh Token
+
+**Endpoint**: `POST /api/auth/restaurant-admin/refresh`
+
+**Description**: Refresh an expired access token using a valid refresh token.
+
+**Query Parameters**:
+- `refreshToken` (required): The refresh token issued during login
+
+**Example**: `POST /api/auth/restaurant-admin/refresh?refreshToken=def50200...`
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "message": "Token refreshed successfully",
+  "data": {
+    "accessToken": "eyJhbGciOi...",
+    "tokenType": "Bearer",
+    "expiresIn": "86400"
+  }
+}
+```
+
+### 3. Validate Token
+
+**Endpoint**: `POST /api/auth/restaurant-admin/validate`
+
+**Description**: Validate an access token and retrieve its payload.
+
+**Query Parameters**:
+- `token` (required): The JWT token to validate
+
+**Example**: `POST /api/auth/restaurant-admin/validate?token=eyJhbGciOi...`
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "message": "Token is valid",
+  "data": {
+    "valid": true,
+    "username": "admin_user",
+    "userId": "c3d4e5f6-a7b8-9012-3456-789012cdefgh",
+    "roles": ["ROLE_RESTAURANT_ADMIN"]
+  }
+}
+```
+
+### 4. Get Current User
+
+**Endpoint**: `GET /api/auth/restaurant-admin/me`
+
+**Description**: Get information about the currently authenticated restaurant admin.
+
+**Headers**:
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**Success Response** (200 OK):
+```json
+{
+  "success": true,
+  "message": "User info retrieved",
+  "data": {
+    "userId": "c3d4e5f6-a7b8-9012-3456-789012cdefgh",
+    "username": "admin_user",
+    "email": "admin@example.com",
+    "staffRole": "RESTAURANT_ADMIN",
+    "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "ACTIVE",
+    "permissions": ["CAN_MANAGE_MENU", "CAN_MANAGE_STAFF"]
+  }
+}
+```
 
 ---
 
 ## Menu Management
 
-### 1. Create Menu
+### 5. Create Menu
 
 **Endpoint**: `POST /api/restaurant-admin/menus`
 
@@ -53,7 +173,7 @@ Content-Type: application/json
 **Request Body**:
 ```json
 {
-  "restaurantId": 1,
+  "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
   "name": "Summer Special",
   "description": "Seasonal menu for summer",
   "menuType": "seasonal",
@@ -74,7 +194,7 @@ curl -X POST http://localhost:8080/api/restaurant-admin/menus \
   -H "Authorization: Bearer <JWT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "restaurantId": 1,
+    "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
     "name": "Summer Special",
     "description": "Seasonal menu for summer",
     "menuType": "seasonal",
@@ -96,14 +216,14 @@ curl -X POST http://localhost:8080/api/restaurant-admin/menus \
   "message": "Menu created successfully",
   "data": {
     "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-    "restaurantId": 1,
+    "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
     "name": "Summer Special",
     // ... other fields
   }
 }
 ```
 
-### 2. Get All Menus
+### 6. Get All Menus
 
 **Endpoint**: `GET /api/restaurant-admin/menus`
 
@@ -112,11 +232,11 @@ curl -X POST http://localhost:8080/api/restaurant-admin/menus \
 **Query Parameters**:
 - `restaurantId` (required): ID of the restaurant
 
-**Example**: `GET /api/restaurant-admin/menus?restaurantId=1`
+**Example**: `GET /api/restaurant-admin/menus?restaurantId=550e8400-e29b-41d4-a716-446655440000`
 
 **cURL Example**:
 ```bash
-curl -X GET "http://localhost:8080/api/restaurant-admin/menus?restaurantId=1" \
+curl -X GET "http://localhost:8080/api/restaurant-admin/menus?restaurantId=550e8400-e29b-41d4-a716-446655440000" \
   -H "Authorization: Bearer <JWT_TOKEN>"
 ```
 
@@ -135,7 +255,7 @@ curl -X GET "http://localhost:8080/api/restaurant-admin/menus?restaurantId=1" \
 }
 ```
 
-### 3. Get Menu by ID
+### 7. Get Menu by ID
 
 **Endpoint**: `GET /api/restaurant-admin/menus/{id}`
 
@@ -162,7 +282,7 @@ curl -X GET http://localhost:8080/api/restaurant-admin/menus/a1b2c3d4-e5f6-7890-
 }
 ```
 
-### 4. Update Menu
+### 8. Update Menu
 
 **Endpoint**: `PUT /api/restaurant-admin/menus/{id}`
 
@@ -176,7 +296,7 @@ curl -X PUT http://localhost:8080/api/restaurant-admin/menus/a1b2c3d4-e5f6-7890-
   -H "Authorization: Bearer <JWT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "restaurantId": 1,
+    "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
     "name": "Updated Summer Special",
     "description": "Updated description",
     "menuType": "seasonal",
@@ -200,7 +320,7 @@ curl -X PUT http://localhost:8080/api/restaurant-admin/menus/a1b2c3d4-e5f6-7890-
 }
 ```
 
-### 5. Patch Menu
+### 9. Patch Menu
 
 **Endpoint**: `PATCH /api/restaurant-admin/menus/{id}`
 
@@ -232,7 +352,7 @@ curl -X PATCH http://localhost:8080/api/restaurant-admin/menus/a1b2c3d4-e5f6-789
 }
 ```
 
-### 6. Delete Menu
+### 10. Delete Menu
 
 **Endpoint**: `DELETE /api/restaurant-admin/menus/{id}`
 
@@ -257,7 +377,7 @@ curl -X DELETE http://localhost:8080/api/restaurant-admin/menus/a1b2c3d4-e5f6-78
 
 ## Menu Item Management
 
-### 7. Create Menu Item
+### 11. Create Menu Item
 
 **Endpoint**: `POST /api/restaurant-admin/menu-items`
 
@@ -266,8 +386,8 @@ curl -X DELETE http://localhost:8080/api/restaurant-admin/menus/a1b2c3d4-e5f6-78
 **Request Body**:
 ```json
 {
-  "restaurantId": 1,
-  "menuId": 10,
+  "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
+  "menuId": "123e4567-e89b-12d3-a456-426614174000",
   "name": "Spicy Chicken Burger",
   "description": "Grilled chicken with spicy sauce",
   "category": "Burgers",
@@ -291,8 +411,8 @@ curl -X POST http://localhost:8080/api/restaurant-admin/menu-items \
   -H "Authorization: Bearer <JWT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "restaurantId": 1,
-    "menuId": 10,
+    "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
+    "menuId": "123e4567-e89b-12d3-a456-426614174000",
     "name": "Spicy Chicken Burger",
     "description": "Grilled chicken with spicy sauce",
     "category": "Burgers",
@@ -323,20 +443,123 @@ curl -X POST http://localhost:8080/api/restaurant-admin/menu-items \
 }
 ```
 
-### 8. Get Menu Items by Menu
+### 12. Bulk Create Menu Items
+
+**Endpoint**: `POST /api/restaurant-admin/menu-items/bulk`
+
+**Description**: Create multiple menu items in a single request. The upload is transactional, so if any item fails validation or conflicts with an existing item, none of the items are created.
+
+**Request Body**:
+```json
+[
+  {
+    "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
+    "menuId": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Classic Veg Burger",
+    "description": "Grilled veg patty with house sauce",
+    "category": "Burgers",
+    "price": 9.99,
+    "isAvailable": true,
+    "isVeg": true,
+    "isSpicy": false,
+    "containsEgg": false,
+    "variants": [],
+    "addons": [],
+    "tags": ["veg"],
+    "imageUrl": "https://example.com/classic-veg-burger.jpg"
+  },
+  {
+    "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
+    "menuId": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Peri Peri Fries",
+    "description": "Crispy fries tossed in peri peri seasoning",
+    "category": "Sides",
+    "price": 4.99,
+    "isAvailable": true,
+    "isVeg": true,
+    "isSpicy": true,
+    "containsEgg": false,
+    "variants": [],
+    "addons": [],
+    "tags": ["spicy", "snack"],
+    "imageUrl": "https://example.com/peri-peri-fries.jpg"
+  }
+]
+```
+
+**cURL Example**:
+```bash
+curl -X POST http://localhost:8080/api/restaurant-admin/menu-items/bulk \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
+      "menuId": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Classic Veg Burger",
+      "description": "Grilled veg patty with house sauce",
+      "category": "Burgers",
+      "price": 9.99,
+      "isAvailable": true,
+      "isVeg": true,
+      "isSpicy": false,
+      "containsEgg": false,
+      "variants": [],
+      "addons": [],
+      "tags": ["veg"],
+      "imageUrl": "https://example.com/classic-veg-burger.jpg"
+    },
+    {
+      "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
+      "menuId": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Peri Peri Fries",
+      "description": "Crispy fries tossed in peri peri seasoning",
+      "category": "Sides",
+      "price": 4.99,
+      "isAvailable": true,
+      "isVeg": true,
+      "isSpicy": true,
+      "containsEgg": false,
+      "variants": [],
+      "addons": [],
+      "tags": ["spicy", "snack"],
+      "imageUrl": "https://example.com/peri-peri-fries.jpg"
+    }
+  ]'
+```
+
+**Success Response** (201 Created):
+```json
+{
+  "success": true,
+  "message": "Menu items uploaded successfully",
+  "data": [
+    {
+      "id": "c3d4e5f6-a7b8-9012-3456-789012cdefab",
+      "name": "Classic Veg Burger"
+    },
+    {
+      "id": "d4e5f6a7-b8c9-0123-4567-89012defabcd",
+      "name": "Peri Peri Fries"
+    }
+  ]
+}
+```
+
+### 13. Get Menu Items by Menu
 
 **Endpoint**: `GET /api/restaurant-admin/menu-items`
 
 **Description**: Get all items for a specific menu.
 
 **Query Parameters**:
-- `menuId` (required): ID of the menu (Long)
+- `menuId` (required): ID of the menu (UUID)
 
-**Example**: `GET /api/restaurant-admin/menu-items?menuId=10`
+**Example**: `GET /api/restaurant-admin/menu-items?menuId=123e4567-e89b-12d3-a456-426614174000`
 
 **cURL Example**:
 ```bash
-curl -X GET "http://localhost:8080/api/restaurant-admin/menu-items?menuId=10" \
+curl -X GET "http://localhost:8080/api/restaurant-admin/menu-items?menuId=123e4567-e89b-12d3-a456-426614174000" \
   -H "Authorization: Bearer <JWT_TOKEN>"
 ```
 
@@ -349,7 +572,7 @@ curl -X GET "http://localhost:8080/api/restaurant-admin/menu-items?menuId=10" \
 }
 ```
 
-### 9. Get Menu Item by ID
+### 14. Get Menu Item by ID
 
 **Endpoint**: `GET /api/restaurant-admin/menu-items/{id}`
 
@@ -370,7 +593,7 @@ curl -X GET http://localhost:8080/api/restaurant-admin/menu-items/b2c3d4e5-f6a7-
 }
 ```
 
-### 10. Update Menu Item
+### 15. Update Menu Item
 
 **Endpoint**: `PUT /api/restaurant-admin/menu-items/{id}`
 
@@ -382,8 +605,8 @@ curl -X PUT http://localhost:8080/api/restaurant-admin/menu-items/b2c3d4e5-f6a7-
   -H "Authorization: Bearer <JWT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "restaurantId": 1,
-    "menuId": 10,
+    "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
+    "menuId": "123e4567-e89b-12d3-a456-426614174000",
     "name": "Updated Spicy Chicken Burger",
     "description": "Updated description",
     "category": "Burgers",
@@ -410,7 +633,7 @@ curl -X PUT http://localhost:8080/api/restaurant-admin/menu-items/b2c3d4e5-f6a7-
 }
 ```
 
-### 11. Patch Menu Item
+### 16. Patch Menu Item
 
 **Endpoint**: `PATCH /api/restaurant-admin/menu-items/{id}`
 
@@ -435,7 +658,7 @@ curl -X PATCH http://localhost:8080/api/restaurant-admin/menu-items/b2c3d4e5-f6a
 }
 ```
 
-### 12. Delete Menu Item
+### 17. Delete Menu Item
 
 **Endpoint**: `DELETE /api/restaurant-admin/menu-items/{id}`
 
@@ -456,7 +679,7 @@ curl -X DELETE http://localhost:8080/api/restaurant-admin/menu-items/b2c3d4e5-f6
 }
 ```
 
-### 13. Toggle Availability
+### 18. Toggle Availability
 
 **Endpoint**: `PATCH /api/restaurant-admin/menu-items/{id}/toggle-availability`
 
@@ -485,7 +708,7 @@ curl -X PATCH http://localhost:8080/api/restaurant-admin/menu-items/b2c3d4e5-f6a
 
 ## Staff Management
 
-### 14. Create Staff
+### 19. Create Staff
 
 **Endpoint**: `POST /api/restaurant-admin/staff`
 
@@ -494,7 +717,7 @@ curl -X PATCH http://localhost:8080/api/restaurant-admin/menu-items/b2c3d4e5-f6a
 **Request Body**:
 ```json
 {
-  "restaurantId": 1,
+  "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
   "employeeCode": "EMP001",
   "staffRole": "WAITER",
   "designation": "Senior Waiter",
@@ -513,7 +736,7 @@ curl -X POST http://localhost:8080/api/restaurant-admin/staff \
   -H "Authorization: Bearer <JWT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "restaurantId": 1,
+    "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
     "employeeCode": "EMP001",
     "staffRole": "WAITER",
     "designation": "Senior Waiter",
@@ -539,7 +762,7 @@ curl -X POST http://localhost:8080/api/restaurant-admin/staff \
 }
 ```
 
-### 15. Get All Staff
+### 20. Get All Staff
 
 **Endpoint**: `GET /api/restaurant-admin/staff`
 
@@ -550,7 +773,7 @@ curl -X POST http://localhost:8080/api/restaurant-admin/staff \
 
 **cURL Example**:
 ```bash
-curl -X GET "http://localhost:8080/api/restaurant-admin/staff?restaurantId=1" \
+curl -X GET "http://localhost:8080/api/restaurant-admin/staff?restaurantId=550e8400-e29b-41d4-a716-446655440000" \
   -H "Authorization: Bearer <JWT_TOKEN>"
 ```
 
@@ -563,7 +786,7 @@ curl -X GET "http://localhost:8080/api/restaurant-admin/staff?restaurantId=1" \
 }
 ```
 
-### 16. Get Staff by ID
+### 21. Get Staff by ID
 
 **Endpoint**: `GET /api/restaurant-admin/staff/{id}`
 
@@ -584,7 +807,7 @@ curl -X GET http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-9012-
 }
 ```
 
-### 17. Update Staff
+### 22. Update Staff
 
 **Endpoint**: `PUT /api/restaurant-admin/staff/{id}`
 
@@ -596,7 +819,7 @@ curl -X PUT http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-9012-
   -H "Authorization: Bearer <JWT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "restaurantId": 1,
+    "restaurantId": "550e8400-e29b-41d4-a716-446655440000",
     "employeeCode": "EMP001",
     "staffRole": "WAITER",
     "designation": "Head Waiter",
@@ -617,7 +840,7 @@ curl -X PUT http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-9012-
 }
 ```
 
-### 18. Patch Staff
+### 23. Patch Staff
 
 **Endpoint**: `PATCH /api/restaurant-admin/staff/{id}`
 
@@ -642,7 +865,7 @@ curl -X PATCH http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-901
 }
 ```
 
-### 19. Delete Staff
+### 24. Delete Staff
 
 **Endpoint**: `DELETE /api/restaurant-admin/staff/{id}`
 
@@ -663,7 +886,7 @@ curl -X DELETE http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-90
 }
 ```
 
-### 20. Update Staff Status
+### 25. Update Staff Status
 
 **Endpoint**: `PATCH /api/restaurant-admin/staff/{id}/status`
 

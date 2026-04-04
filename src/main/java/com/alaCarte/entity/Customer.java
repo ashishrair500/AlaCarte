@@ -1,9 +1,12 @@
 package com.alaCarte.entity;
 
+import com.alaCarte.entity.blueprint.BaseModel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -17,13 +20,11 @@ import java.util.UUID;
 @Entity
 @Table(name = "customer")
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class Customer {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+public class Customer extends BaseModel {
 
     // Links
     @Column(name = "restaurant_id", nullable = false)
@@ -78,13 +79,6 @@ public class Customer {
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
-    // Audit
-    @Column(name = "created_at", updatable = false)
-    private OffsetDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
-
     @Column(name = "created_by")
     private UUID createdBy;
 
@@ -102,14 +96,7 @@ public class Customer {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = OffsetDateTime.now();
-        updatedAt = OffsetDateTime.now();
         if (visitCount == null) visitCount = 0;
         if (isActive == null) isActive = true;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = OffsetDateTime.now();
     }
 }

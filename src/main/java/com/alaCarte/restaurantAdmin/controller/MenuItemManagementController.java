@@ -73,6 +73,45 @@ public class MenuItemManagementController {
     }
 
     /**
+     * Bulk create menu items
+     * POST /api/restaurant-admin/menu-items/bulk
+     */
+    @PostMapping("/bulk")
+    public ResponseEntity<ApiResponse<List<MenuItemResponse>>> bulkCreateMenuItems(
+            @Valid @RequestBody List<@Valid MenuItemRequest> requests,
+            @RequestHeader("Authorization") String token) {
+        try {
+            // Validate RestaurantAdmin access
+            restaurantAdminMiddleware.validateRestaurantAdmin(token);
+
+            List<MenuItem> menuItems = requests.stream()
+                    .map(this::mapToEntity)
+                    .collect(Collectors.toList());
+
+            List<MenuItemResponse> responses = menuItemService.createMenuItemsBulk(menuItems).stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Menu items uploaded successfully", responses));
+
+        } catch (io.jsonwebtoken.JwtException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to bulk upload menu items: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Get all menu items for a menu
      * GET /api/restaurant-admin/menu-items?menuId=...
      */

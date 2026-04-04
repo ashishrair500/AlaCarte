@@ -1,13 +1,15 @@
 package com.alaCarte.entity;
 
+import com.alaCarte.entity.blueprint.BaseModel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
@@ -17,13 +19,11 @@ import java.util.UUID;
 @Entity
 @Table(name = "restaurants")
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class Restaurant {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+public class Restaurant extends BaseModel {
 
     @Column(nullable = false, length = 255)
     private String name;
@@ -121,29 +121,16 @@ public class Restaurant {
     @Column(length = 30)
     private String status = "open"; // open, closed, temp_closed
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
-
     @Column(name = "created_by")
     private UUID createdBy; // SuperAdmin who created this
 
     @PrePersist
     protected void onCreate() {
-        createdAt = OffsetDateTime.now();
-        updatedAt = OffsetDateTime.now();
         if (totalRatings == null) totalRatings = 0;
         if (isVegOnly == null) isVegOnly = false;
         if (hasParking == null) hasParking = false;
         if (isPopular == null) isPopular = false;
         if (reservationRequired == null) reservationRequired = false;
         if (status == null) status = "open";
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = OffsetDateTime.now();
     }
 }

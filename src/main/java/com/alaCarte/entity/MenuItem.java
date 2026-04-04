@@ -1,9 +1,12 @@
 package com.alaCarte.entity;
 
+import com.alaCarte.entity.blueprint.BaseModel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -20,13 +23,11 @@ import java.util.UUID;
 @Entity
 @Table(name = "menu_item")
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class MenuItem {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+public class MenuItem extends BaseModel {
 
     // Relationships
     @Column(name = "restaurant_id", nullable = false)
@@ -103,31 +104,17 @@ public class MenuItem {
     @Column(columnDefinition = "JSONB")
     private Map<String, Object> meta;
 
-    // Audit
-    @Column(name = "created_at", updatable = false)
-    private OffsetDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
-
     // Soft Delete
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = OffsetDateTime.now();
-        updatedAt = OffsetDateTime.now();
         if (isAvailable == null) {
             isAvailable = true;
         }
         if (displayOrder == null) {
             displayOrder = 0;
         }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = OffsetDateTime.now();
     }
 }

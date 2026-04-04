@@ -7,9 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -43,6 +45,49 @@ public class MenuItemService {
         }
         
         return menuItemRepository.save(menuItem);
+    }
+
+    /**
+     * Create multiple menu items in a single transaction.
+     */
+    @Transactional
+    public List<MenuItem> createMenuItemsBulk(List<MenuItem> menuItems) {
+        if (menuItems == null || menuItems.isEmpty()) {
+            throw new RuntimeException("At least one menu item is required for bulk upload");
+        }
+
+        UUID menuId = menuItems.get(0).getMenuId();
+        UUID restaurantId = menuItems.get(0).getRestaurantId();
+        Set<String> itemNamesInRequest = new HashSet<>();
+
+        for (MenuItem menuItem : menuItems) {
+            if (!menuId.equals(menuItem.getMenuId())) {
+                throw new RuntimeException("All menu items in a bulk upload must belong to the same menu");
+            }
+
+            if (!restaurantId.equals(menuItem.getRestaurantId())) {
+                throw new RuntimeException("All menu items in a bulk upload must belong to the same restaurant");
+            }
+
+            String normalizedName = menuItem.getName().trim().toLowerCase();
+            if (!itemNamesInRequest.add(normalizedName)) {
+                throw new RuntimeException("Duplicate menu item name '" + menuItem.getName() + "' found in bulk upload request");
+            }
+
+            if (menuItemRepository.existsByMenuIdAndName(menuItem.getMenuId(), menuItem.getName())) {
+                throw new RuntimeException("Menu item with name '" + menuItem.getName() + "' already exists in this menu");
+            }
+        }
+
+        int nextDisplayOrder = menuItemRepository.getMaxDisplayOrder(menuId);
+        for (MenuItem menuItem : menuItems) {
+            if (menuItem.getDisplayOrder() == null || menuItem.getDisplayOrder() == 0) {
+                nextDisplayOrder += 1;
+                menuItem.setDisplayOrder(nextDisplayOrder);
+            }
+        }
+
+        return menuItemRepository.saveAll(menuItems);
     }
 
     /**

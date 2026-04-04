@@ -1,9 +1,12 @@
 package com.alaCarte.entity;
 
+import com.alaCarte.entity.blueprint.BaseModel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -21,13 +24,11 @@ import java.util.UUID;
     @Index(name = "idx_menu_active", columnList = "restaurant_id, is_active")
 })
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class Menu {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+public class Menu extends BaseModel {
 
     @Column(name = "restaurant_id", nullable = false)
     private UUID restaurantId;
@@ -60,12 +61,6 @@ public class Menu {
     @Column(columnDefinition = "JSONB")
     private Map<String, Object> meta; // extra fields (tags, styling, filters, etc.)
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
-
     @Column(name = "created_by")
     private UUID createdBy; // who added this menu
 
@@ -74,18 +69,11 @@ public class Menu {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = OffsetDateTime.now();
-        updatedAt = OffsetDateTime.now();
         if (isActive == null) {
             isActive = true;
         }
         if (displayOrder == null) {
             displayOrder = 0;
         }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = OffsetDateTime.now();
     }
 }

@@ -1,13 +1,15 @@
 package com.alaCarte.entity;
 
+import com.alaCarte.entity.blueprint.BaseModel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -18,13 +20,11 @@ import java.util.UUID;
 @Entity
 @Table(name = "super_admin")
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class SuperAdmin {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+public class SuperAdmin extends BaseModel {
 
     // Login Credentials
     @Column(nullable = false, unique = true, columnDefinition = "TEXT")
@@ -55,12 +55,6 @@ public class SuperAdmin {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
-
     @Column(name = "created_by")
     private UUID createdBy; // Reference to another super_admin
 
@@ -71,18 +65,11 @@ public class SuperAdmin {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = OffsetDateTime.now();
-        updatedAt = OffsetDateTime.now();
         if (isActive == null) {
             isActive = true;
         }
         if (roleLevel == null) {
             roleLevel = 1;
         }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = OffsetDateTime.now();
     }
 }
