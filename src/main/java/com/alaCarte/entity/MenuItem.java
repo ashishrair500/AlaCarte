@@ -1,18 +1,25 @@
 package com.alaCarte.entity;
 
 import com.alaCarte.entity.blueprint.BaseEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -21,100 +28,138 @@ import java.util.UUID;
  * Represents individual food/drink items in a restaurant's menu
  */
 @Entity
-@Table(name = "menu_item")
-@Data
+@Table(name = "menu_item", indexes = {
+    @Index(name = "idx_item_menu_category", columnList = "menu_id, category_id, display_order"),
+    @Index(name = "idx_item_availability", columnList = "restaurant_id, is_available"),
+    @Index(name = "idx_item_price", columnList = "restaurant_id, base_price"),
+    @Index(name = "idx_item_dietary", columnList = "restaurant_id, is_veg, is_vegan")
+})
+@SQLRestriction("deleted = 0")
+@Getter
+@Setter
 @EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
+@ToString(callSuper = true, exclude = {"restaurant", "menu", "category"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class MenuItem extends BaseEntity {
 
-    // Relationships
-    @Column(name = "restaurant_id", nullable = false)
-    private UUID restaurantId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "restaurant_id", nullable = false)
+    private Restaurant restaurant;
 
-    @Column(name = "menu_id", nullable = false)
-    private UUID menuId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "menu_id", nullable = false)
+    private Menu menu;
 
-    // Basic Info
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private MenuCategory category;
+
+    @Column(nullable = false, length = 255)
     private String name;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(columnDefinition = "TEXT")
-    private String category; // e.g. "Pizza", "Starters", "Beverages"
+    @Column(name = "ai_description", columnDefinition = "TEXT")
+    private String aiDescription;
 
-    // Pricing
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal price; // base price
+    @Column(name = "base_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal basePrice;
 
     @Column(name = "discount_price", precision = 10, scale = 2)
-    private BigDecimal discountPrice; // optional discounted price
+    private BigDecimal discountPrice;
 
-    // Availability
-    @Column(name = "is_available")
-    private Boolean isAvailable = true; // staff updates this in daily workflow
+    @Column(name = "is_available", nullable = false)
+    private Boolean isAvailable = true;
 
     @Column(name = "is_veg")
-    private Boolean isVeg; // veg/non-veg indicator
+    private Boolean isVeg;
+
+    @Column(name = "is_vegan")
+    private Boolean isVegan;
 
     @Column(name = "is_spicy")
-    private Boolean isSpicy; // optional quick tag
+    private Boolean isSpicy;
 
     @Column(name = "contains_egg")
-    private Boolean containsEgg; // common in India
+    private Boolean containsEgg;
 
-    // Variants & Add-ons
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "JSONB")
-    private List<Map<String, Object>> variants; // e.g. sizes, flavors
+    @Column(name = "contains_gluten")
+    private Boolean containsGluten;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "JSONB")
-    private List<Map<String, Object>> addons; // toppings, extras
+    @Column(name = "contains_nuts")
+    private Boolean containsNuts;
 
-    // Tags & Filters
-    @Column(columnDefinition = "TEXT[]")
-    private String[] tags; // gluten-free, vegan, chef-special etc.
+    @Column(name = "contains_dairy")
+    private Boolean containsDairy;
 
-    // Images
+    @Column(name = "spice_level")
+    private Short spiceLevel;
+
+    @Column(name = "prep_time_minutes")
+    private Short prepTimeMinutes;
+
     @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
+    @Column(name = "gallery", columnDefinition = "TEXT[]")
+    private String[] gallery;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "JSONB")
-    private List<String> gallery; // multiple images
+    private Map<String, Object> nutrition;
 
-    // Nutrition Info
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "JSONB")
-    private Map<String, Object> nutrition; // calories, protein, carbs, etc.
+    @Column(name = "ingredients", columnDefinition = "TEXT[]")
+    private String[] ingredients;
 
-    // Display Customization
-    @Column(name = "display_order")
-    private Integer displayOrder = 0;
+    @Column(name = "cuisine_type", length = 100)
+    private String cuisineType;
 
-    @Column(columnDefinition = "TEXT")
-    private String badge; // e.g. "Chef's Special", "New", "Bestseller"
+    @Column(name = "course_type", length = 50)
+    private String courseType;
 
-    // Extra metadata
+    @Column(name = "display_order", nullable = false)
+    private Short displayOrder = 0;
+
+    @Column(length = 100)
+    private String badge;
+
+    @Column(name = "has_variants", nullable = false)
+    private Boolean hasVariants = false;
+
+    @Column(name = "has_addons", nullable = false)
+    private Boolean hasAddons = false;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "JSONB")
     private Map<String, Object> meta;
 
-    // Soft Delete
-    @Column(name = "deleted_at")
-    private OffsetDateTime deletedAt;
+    @Column(name = "created_by")
+    private UUID createdBy;
+
+    @Column(name = "updated_by")
+    private UUID updatedBy;
+
+    @Column(name = "deleted", nullable = false)
+    private Short deleted = 0;
 
     @PrePersist
-    protected void onCreate() {
+    protected void initializeDefaults() {
         if (isAvailable == null) {
             isAvailable = true;
         }
         if (displayOrder == null) {
             displayOrder = 0;
+        }
+        if (hasVariants == null) {
+            hasVariants = false;
+        }
+        if (hasAddons == null) {
+            hasAddons = false;
+        }
+        if (deleted == null) {
+            deleted = 0;
         }
     }
 }

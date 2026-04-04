@@ -583,6 +583,7 @@ Carries its own `display_order` so the same group can appear at a different posi
 | `addon_group_id` | `UUID` | NO | — | FK → `menu_item_addon_group.id` |
 | `display_order` | `SMALLINT` | NO | `0` | Per-item override of group display position |
 | `created_at` | `TIMESTAMPTZ` | NO | `now()` | When this mapping was created |
+| `updated_at` | `TIMESTAMPTZ` | NO | `now()` | Auto-updated on modification. Included to align with shared `BaseEntity` inheritance |
 | `deleted` | `SMALLINT` | NO | `0` | Soft delete flag. `0` = active, `1` = deleted. Constrained to only 0 or 1. Allows unlinking a group from an item without destroying the record |
 
 ### JPA Mappings — `MenuItemAddonGroupMap.java`
@@ -619,7 +620,7 @@ public class MenuItemAddonGroupMap {
     // 0 = active, 1 = soft-deleted (unlinked but preserved for audit)
     // @Column(columnDefinition = "SMALLINT DEFAULT 0 CHECK (deleted IN (0,1))")
     private Short deleted;
-    // ... created_at
+    // ... created_at, updated_at
 }
 ```
 
@@ -627,6 +628,7 @@ public class MenuItemAddonGroupMap {
 - Two `@ManyToOne` fields on a join entity is the standard JPA pattern for many-to-many with extra payload columns.
 - Do not collapse this into `@ManyToMany` on `MenuItem` — you would lose `display_order`.
 - The unique constraint `(menu_item_id, addon_group_id)` prevents duplicate mappings and must be enforced at the DB level.
+- `updated_at` is intentionally present even on this junction entity so it can inherit the common timestamp behavior from `BaseEntity`.
 
 ### Constraints
 
@@ -740,6 +742,7 @@ Join table linking menu items to tags. Modeled as a full entity (rather than tra
 | `menu_item_id` | `UUID` | NO | — | FK → `menu_item.id` |
 | `tag_id` | `UUID` | NO | — | FK → `menu_item_tag.id` |
 | `created_at` | `TIMESTAMPTZ` | NO | `now()` | When the tag was applied to this item |
+| `updated_at` | `TIMESTAMPTZ` | NO | `now()` | Auto-updated on modification. Included to align with shared `BaseEntity` inheritance |
 | `deleted` | `SMALLINT` | NO | `0` | Soft delete flag. `0` = active, `1` = deleted. Allows removing a tag from an item without erasing the audit trail of when it was applied |
 
 ### JPA Mappings — `MenuItemTagMap.java`
@@ -776,8 +779,12 @@ public class MenuItemTagMap {
     // 0 = active, 1 = soft-deleted (tag removed from item but audit trail preserved)
     // @Column(columnDefinition = "SMALLINT DEFAULT 0 CHECK (deleted IN (0,1))")
     private Short deleted;
+    // ... created_at, updated_at
 }
 ```
+
+**Notes:**
+- `updated_at` is intentionally present even on this junction entity so it can inherit the common timestamp behavior from `BaseEntity`.
 
 ### Constraints
 
