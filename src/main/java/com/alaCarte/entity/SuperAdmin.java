@@ -1,6 +1,6 @@
 package com.alaCarte.entity;
 
-import com.alaCarte.entity.blueprint.BaseModel;
+import com.alaCarte.entity.blueprint.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,7 +24,7 @@ import java.util.UUID;
 @ToString(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class SuperAdmin extends BaseModel {
+public class SuperAdmin extends BaseEntity {
 
     // Login Credentials
     @Column(nullable = false, unique = true, columnDefinition = "TEXT")

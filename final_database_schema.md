@@ -3,7 +3,7 @@
 **Database:** PostgreSQL  
 **Schema Management:** Flyway (recommended migration to replace `ddl-auto=update`)  
 **Primary Key Strategy:** UUID (`gen_random_uuid()`)  
-**Soft Delete Convention:** All tables use `deleted_at TIMESTAMPTZ` — active records always have `deleted_at IS NULL`  
+**Soft Delete Convention:** All tables use a `deleted SMALLINT` column — `0` = active, `1` = soft-deleted. Replaces the previous `deleted_at TIMESTAMPTZ` approach for simpler integer-based filtering and flag checking in application code.  
 **Timestamp Convention:** All timestamps are `TIMESTAMPTZ` (timezone-aware)  
 **JPA Stack:** Spring Boot 3.2 · Hibernate 6.3 · `jakarta.persistence` · Java 21
 
@@ -109,7 +109,7 @@ This table is critical for LLM context generation — each category carries a de
 | `meta` | `JSONB` | YES | `NULL` | Extensible field for future attributes (e.g., color codes, icons, UI hints) |
 | `created_at` | `TIMESTAMPTZ` | NO | `now()` | Record creation time. Immutable after insert |
 | `updated_at` | `TIMESTAMPTZ` | NO | `now()` | Auto-updated on every row modification |
-| `deleted_at` | `TIMESTAMPTZ` | YES | `NULL` | Soft delete. NULL = active; populated = deleted |
+| `deleted` | `SMALLINT` | NO | `0` | Soft delete flag. `0` = active, `1` = deleted. Replaces timestamp-based soft delete for simpler integer filtering. Constrained to only allow values 0 or 1 |
 | `created_by` | `UUID` | YES | `NULL` | Audit: who created this record (staff or super_admin id) |
 | `updated_by` | `UUID` | YES | `NULL` | Audit: who last updated this record |
 
@@ -160,6 +160,9 @@ public class MenuCategory {
     // cannot safely represent both. Resolved at the service layer.
     private UUID createdBy;
     private UUID updatedBy;
+    // 0 = active, 1 = soft-deleted
+    // @Column(columnDefinition = "SMALLINT DEFAULT 0 CHECK (deleted IN (0,1))")
+    private Short deleted;
     // ... timestamps, meta (JSONB)
 }
 ```
@@ -167,12 +170,13 @@ public class MenuCategory {
 **Notes:**
 - `parentCategory` is a self-referencing `@ManyToOne` on the same entity class — standard JPA, no special handling needed beyond ensuring the `nullable = true` is set.
 - `createdBy` / `updatedBy` remain plain `UUID` fields throughout the entire schema for the same polymorphic reason noted above.
+- `deleted` maps to `SMALLINT` in Java as `Short`. Use `@ColumnDefault("0")` and a `@Check` constraint in Hibernate or enforce via DDL.
 
 ### Indexes
 
 ```sql
-CREATE INDEX idx_category_menu         ON menu_category (menu_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_category_restaurant   ON menu_category (restaurant_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_category_menu         ON menu_category (menu_id) WHERE deleted = 0;
+CREATE INDEX idx_category_restaurant   ON menu_category (restaurant_id) WHERE deleted = 0;
 CREATE INDEX idx_category_parent       ON menu_category (parent_category_id) WHERE parent_category_id IS NOT NULL;
 CREATE INDEX idx_category_display      ON menu_category (menu_id, display_order);
 ```
@@ -222,7 +226,7 @@ Two description fields exist intentionally: `description` is customer-facing (sh
 | `meta` | `JSONB` | YES | `NULL` | Extensible field for restaurant-specific or future attributes |
 | `created_at` | `TIMESTAMPTZ` | NO | `now()` | Immutable creation timestamp |
 | `updated_at` | `TIMESTAMPTZ` | NO | `now()` | Auto-updated on modification |
-| `deleted_at` | `TIMESTAMPTZ` | YES | `NULL` | Soft delete. NULL = active |
+| `deleted` | `SMALLINT` | NO | `0` | Soft delete flag. `0` = active, `1` = deleted. Constrained to only 0 or 1 |
 | `created_by` | `UUID` | YES | `NULL` | Audit: creator reference |
 | `updated_by` | `UUID` | YES | `NULL` | Audit: last updater reference |
 
@@ -287,6 +291,9 @@ public class MenuItem {
     private Boolean hasAddons;     // service-managed denormalized flag
     private UUID createdBy;
     private UUID updatedBy;
+    // 0 = active, 1 = soft-deleted
+    // @Column(columnDefinition = "SMALLINT DEFAULT 0 CHECK (deleted IN (0,1))")
+    private Short deleted;
     // ... timestamps, meta (JSONB), gallery (TEXT[]),
     //     ingredients (TEXT[]), nutrition (JSONB)
 }
@@ -301,16 +308,16 @@ public class MenuItem {
 
 ```sql
 -- Most critical: rendering a full menu page
-CREATE INDEX idx_item_menu_category    ON menu_item (menu_id, category_id, display_order) WHERE deleted_at IS NULL;
+CREATE INDEX idx_item_menu_category    ON menu_item (menu_id, category_id, display_order) WHERE deleted = 0;
 
 -- Staff availability dashboard
-CREATE INDEX idx_item_availability     ON menu_item (restaurant_id, is_available) WHERE deleted_at IS NULL;
+CREATE INDEX idx_item_availability     ON menu_item (restaurant_id, is_available) WHERE deleted = 0;
 
 -- Price filtering (AI recommendations, customer filters)
-CREATE INDEX idx_item_price            ON menu_item (restaurant_id, base_price) WHERE deleted_at IS NULL;
+CREATE INDEX idx_item_price            ON menu_item (restaurant_id, base_price) WHERE deleted = 0;
 
 -- Dietary filtering
-CREATE INDEX idx_item_dietary          ON menu_item (restaurant_id, is_veg, is_vegan) WHERE deleted_at IS NULL;
+CREATE INDEX idx_item_dietary          ON menu_item (restaurant_id, is_veg, is_vegan) WHERE deleted = 0;
 
 -- GIN index for full-text search on name + description
 CREATE INDEX idx_item_fts              ON menu_item USING GIN (to_tsvector('english', name || ' ' || coalesce(description, '')));
@@ -346,7 +353,7 @@ A variant has its own price and availability, independently manageable by staff.
 | `meta` | `JSONB` | YES | `NULL` | Extensible. E.g., weight in grams, serving size ml |
 | `created_at` | `TIMESTAMPTZ` | NO | `now()` | Immutable creation timestamp |
 | `updated_at` | `TIMESTAMPTZ` | NO | `now()` | Auto-updated |
-| `deleted_at` | `TIMESTAMPTZ` | YES | `NULL` | Soft delete |
+| `deleted` | `SMALLINT` | NO | `0` | Soft delete flag. `0` = active, `1` = deleted. Constrained to only 0 or 1 |
 
 ### JPA Mappings — `MenuItemVariant.java`
 
@@ -387,6 +394,9 @@ public class MenuItemVariant {
     private Boolean isAvailable;
     private Boolean isDefault;
     private Short displayOrder;
+    // 0 = active, 1 = soft-deleted
+    // @Column(columnDefinition = "SMALLINT DEFAULT 0 CHECK (deleted IN (0,1))")
+    private Short deleted;
     // ... timestamps, meta (JSONB)
 }
 ```
@@ -398,8 +408,8 @@ public class MenuItemVariant {
 ### Indexes
 
 ```sql
-CREATE INDEX idx_variant_item          ON menu_item_variant (menu_item_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_variant_restaurant    ON menu_item_variant (restaurant_id, is_available) WHERE deleted_at IS NULL;
+CREATE INDEX idx_variant_item          ON menu_item_variant (menu_item_id) WHERE deleted = 0;
+CREATE INDEX idx_variant_restaurant    ON menu_item_variant (restaurant_id, is_available) WHERE deleted = 0;
 ```
 
 ---
@@ -427,7 +437,7 @@ Groups are defined at the **restaurant level** and reused across items — avoid
 | `is_active` | `BOOLEAN` | NO | `true` | Soft toggle — deactivating hides group from all linked items |
 | `created_at` | `TIMESTAMPTZ` | NO | `now()` | Immutable creation timestamp |
 | `updated_at` | `TIMESTAMPTZ` | NO | `now()` | Auto-updated |
-| `deleted_at` | `TIMESTAMPTZ` | YES | `NULL` | Soft delete |
+| `deleted` | `SMALLINT` | NO | `0` | Soft delete flag. `0` = active, `1` = deleted. Constrained to only 0 or 1 |
 | `created_by` | `UUID` | YES | `NULL` | Audit: creator reference |
 
 ### JPA Mappings — `MenuItemAddonGroup.java`
@@ -461,6 +471,9 @@ public class MenuItemAddonGroup {
     private Short displayOrder;
     private Boolean isActive;
     private UUID createdBy;
+    // 0 = active, 1 = soft-deleted
+    // @Column(columnDefinition = "SMALLINT DEFAULT 0 CHECK (deleted IN (0,1))")
+    private Short deleted;
     // ... timestamps
 }
 ```
@@ -471,7 +484,7 @@ public class MenuItemAddonGroup {
 ### Indexes
 
 ```sql
-CREATE INDEX idx_addon_group_restaurant ON menu_item_addon_group (restaurant_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_addon_group_restaurant ON menu_item_addon_group (restaurant_id) WHERE deleted = 0;
 ```
 
 ---
@@ -499,7 +512,7 @@ Zero-price addons (removal requests or free extras) are valid — `price` defaul
 | `meta` | `JSONB` | YES | `NULL` | Extensible. E.g., calorie addition, per-addon allergen flags |
 | `created_at` | `TIMESTAMPTZ` | NO | `now()` | Immutable |
 | `updated_at` | `TIMESTAMPTZ` | NO | `now()` | Auto-updated |
-| `deleted_at` | `TIMESTAMPTZ` | YES | `NULL` | Soft delete |
+| `deleted` | `SMALLINT` | NO | `0` | Soft delete flag. `0` = active, `1` = deleted. Constrained to only 0 or 1 |
 
 ### JPA Mappings — `MenuItemAddon.java`
 
@@ -538,6 +551,9 @@ public class MenuItemAddon {
     private Boolean isAvailable;
     private Boolean isDefault;
     private Short displayOrder;
+    // 0 = active, 1 = soft-deleted
+    // @Column(columnDefinition = "SMALLINT DEFAULT 0 CHECK (deleted IN (0,1))")
+    private Short deleted;
     // ... timestamps, meta (JSONB)
 }
 ```
@@ -545,8 +561,8 @@ public class MenuItemAddon {
 ### Indexes
 
 ```sql
-CREATE INDEX idx_addon_group_fk        ON menu_item_addon (addon_group_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_addon_restaurant      ON menu_item_addon (restaurant_id, is_available) WHERE deleted_at IS NULL;
+CREATE INDEX idx_addon_group_fk        ON menu_item_addon (addon_group_id) WHERE deleted = 0;
+CREATE INDEX idx_addon_restaurant      ON menu_item_addon (restaurant_id, is_available) WHERE deleted = 0;
 ```
 
 ---
@@ -567,6 +583,7 @@ Carries its own `display_order` so the same group can appear at a different posi
 | `addon_group_id` | `UUID` | NO | — | FK → `menu_item_addon_group.id` |
 | `display_order` | `SMALLINT` | NO | `0` | Per-item override of group display position |
 | `created_at` | `TIMESTAMPTZ` | NO | `now()` | When this mapping was created |
+| `deleted` | `SMALLINT` | NO | `0` | Soft delete flag. `0` = active, `1` = deleted. Constrained to only 0 or 1. Allows unlinking a group from an item without destroying the record |
 
 ### JPA Mappings — `MenuItemAddonGroupMap.java`
 
@@ -599,6 +616,9 @@ public class MenuItemAddonGroupMap {
 
     // Payload column — the reason this is a full entity, not @ManyToMany
     private Short displayOrder;
+    // 0 = active, 1 = soft-deleted (unlinked but preserved for audit)
+    // @Column(columnDefinition = "SMALLINT DEFAULT 0 CHECK (deleted IN (0,1))")
+    private Short deleted;
     // ... created_at
 }
 ```
@@ -648,6 +668,7 @@ Having tags as a proper table enforces naming consistency, enables filtered quer
 | `is_active` | `BOOLEAN` | NO | `true` | Deactivating removes the tag from UI across all linked items |
 | `created_at` | `TIMESTAMPTZ` | NO | `now()` | Immutable |
 | `updated_at` | `TIMESTAMPTZ` | NO | `now()` | Auto-updated |
+| `deleted` | `SMALLINT` | NO | `0` | Soft delete flag. `0` = active, `1` = deleted. Constrained to only 0 or 1. Distinct from `is_active` — `is_active = false` means hidden but reusable; `deleted = 1` means permanently removed |
 
 ### JPA Mappings — `MenuItemTag.java`
 
@@ -678,6 +699,9 @@ public class MenuItemTag {
     private String colorHex;
     private String iconUrl;
     private Boolean isActive;
+    // 0 = active, 1 = soft-deleted
+    // @Column(columnDefinition = "SMALLINT DEFAULT 0 CHECK (deleted IN (0,1))")
+    private Short deleted;
     // ... timestamps
 }
 ```
@@ -685,6 +709,7 @@ public class MenuItemTag {
 **Notes:**
 - `restaurant` is nullable here — a `NULL` value is intentional and means the tag is platform-level. `nullable = true` on `@JoinColumn` correctly reflects this.
 - When `restaurant` is null, JPA stores NULL in the `restaurant_id` column with no issues.
+- `deleted = 1` permanently removes a tag from use. `is_active = false` is a softer toggle — the tag exists and its `tag_map` links are intact, just hidden from the UI.
 
 ### Constraints
 
@@ -696,8 +721,8 @@ ALTER TABLE menu_item_tag
 ### Indexes
 
 ```sql
-CREATE INDEX idx_tag_restaurant        ON menu_item_tag (restaurant_id) WHERE is_active = true;
-CREATE INDEX idx_tag_type              ON menu_item_tag (tag_type) WHERE is_active = true;
+CREATE INDEX idx_tag_restaurant        ON menu_item_tag (restaurant_id) WHERE is_active = true AND deleted = 0;
+CREATE INDEX idx_tag_type              ON menu_item_tag (tag_type) WHERE is_active = true AND deleted = 0;
 ```
 
 ---
@@ -715,6 +740,7 @@ Join table linking menu items to tags. Modeled as a full entity (rather than tra
 | `menu_item_id` | `UUID` | NO | — | FK → `menu_item.id` |
 | `tag_id` | `UUID` | NO | — | FK → `menu_item_tag.id` |
 | `created_at` | `TIMESTAMPTZ` | NO | `now()` | When the tag was applied to this item |
+| `deleted` | `SMALLINT` | NO | `0` | Soft delete flag. `0` = active, `1` = deleted. Allows removing a tag from an item without erasing the audit trail of when it was applied |
 
 ### JPA Mappings — `MenuItemTagMap.java`
 
@@ -747,6 +773,9 @@ public class MenuItemTagMap {
 
     // Payload — the reason this is a full entity, not @ManyToMany
     private OffsetDateTime createdAt;
+    // 0 = active, 1 = soft-deleted (tag removed from item but audit trail preserved)
+    // @Column(columnDefinition = "SMALLINT DEFAULT 0 CHECK (deleted IN (0,1))")
+    private Short deleted;
 }
 ```
 
@@ -797,7 +826,7 @@ Combos carry their own `ai_description` so the LLM can reason about bundles as f
 | `meta` | `JSONB` | YES | `NULL` | Extensible |
 | `created_at` | `TIMESTAMPTZ` | NO | `now()` | Immutable |
 | `updated_at` | `TIMESTAMPTZ` | NO | `now()` | Auto-updated |
-| `deleted_at` | `TIMESTAMPTZ` | YES | `NULL` | Soft delete |
+| `deleted` | `SMALLINT` | NO | `0` | Soft delete flag. `0` = active, `1` = deleted. Constrained to only 0 or 1 |
 | `created_by` | `UUID` | YES | `NULL` | Audit: creator reference |
 | `updated_by` | `UUID` | YES | `NULL` | Audit: last updater reference |
 
@@ -844,6 +873,9 @@ public class Combo {
     private Short displayOrder;
     private UUID createdBy;
     private UUID updatedBy;
+    // 0 = active, 1 = soft-deleted
+    // @Column(columnDefinition = "SMALLINT DEFAULT 0 CHECK (deleted IN (0,1))")
+    private Short deleted;
     // ... timestamps, meta (JSONB), available_days (TEXT[])
 }
 ```
@@ -851,9 +883,9 @@ public class Combo {
 ### Indexes
 
 ```sql
-CREATE INDEX idx_combo_menu            ON combo (menu_id, is_available) WHERE deleted_at IS NULL;
-CREATE INDEX idx_combo_restaurant      ON combo (restaurant_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_combo_validity        ON combo (valid_from, valid_to) WHERE deleted_at IS NULL;
+CREATE INDEX idx_combo_menu            ON combo (menu_id, is_available) WHERE deleted = 0;
+CREATE INDEX idx_combo_restaurant      ON combo (restaurant_id) WHERE deleted = 0;
+CREATE INDEX idx_combo_validity        ON combo (valid_from, valid_to) WHERE deleted = 0;
 ```
 
 ---
@@ -880,6 +912,7 @@ Each row is one slot in a combo — a specific menu item (and optionally a speci
 | `note` | `TEXT` | YES | `NULL` | Internal note about this slot (e.g., "Always served chilled") |
 | `created_at` | `TIMESTAMPTZ` | NO | `now()` | Immutable |
 | `updated_at` | `TIMESTAMPTZ` | NO | `now()` | Auto-updated |
+| `deleted` | `SMALLINT` | NO | `0` | Soft delete flag. `0` = active, `1` = deleted. Constrained to only 0 or 1. Allows removing a slot from a combo without destroying the record |
 
 ### JPA Mappings — `ComboItem.java`
 
@@ -931,6 +964,9 @@ public class ComboItem {
     private Boolean isSubstitutable;
     private Short displayOrder;
     private String note;
+    // 0 = active, 1 = soft-deleted (slot removed from combo but record preserved)
+    // @Column(columnDefinition = "SMALLINT DEFAULT 0 CHECK (deleted IN (0,1))")
+    private Short deleted;
     // ... timestamps
 }
 ```
@@ -984,7 +1020,7 @@ CREATE INDEX idx_combo_item_menu_item  ON combo_item (menu_item_id);
 ## Index Strategy
 
 ### Why partial indexes everywhere?
-All performance-critical indexes use `WHERE deleted_at IS NULL` or `WHERE is_active = true`. This keeps index size small — soft-deleted rows (which accumulate over time) are excluded, so index scans stay fast even at millions of rows.
+All performance-critical indexes use `WHERE deleted = 0` or combined with `WHERE is_active = true`. This keeps index size small — soft-deleted rows (which accumulate over time at scale) are excluded from the index entirely, so scans stay fast. Integer comparisons on `deleted` are marginally cheaper than timestamp NULL checks and are more explicit in query plans.
 
 ### Composite index ordering rule
 Columns are ordered: **equality filters first, then range/sort columns last.** For example, `(menu_id, category_id, display_order)` — `menu_id` and `category_id` are equality conditions, `display_order` is for ORDER BY.
@@ -1028,8 +1064,8 @@ PostgreSQL ENUMs require `ALTER TYPE` to add new values, which acquires an `ACCE
 ### 7. `createdBy` / `updatedBy` remain plain `UUID` throughout
 These audit fields can reference either `RestaurantStaff.id` or `SuperAdmin.id` depending on who performed the action. A typed `@ManyToOne` to a single entity class cannot model this polymorphism safely — they remain plain `UUID` fields resolved by the service layer when audit context is needed.
 
-### 8. Soft delete via Hibernate `@SQLRestriction`
-All 10 tables use `deleted_at TIMESTAMPTZ` uniformly. Apply `@SQLRestriction("deleted_at IS NULL")` on each entity class (Hibernate 6.3+ replacement for deprecated `@Where`) so every repository query automatically filters out soft-deleted rows without explicit `WHERE` clauses in every JPQL/native query.
+### 8. Soft delete via `deleted SMALLINT` — not a timestamp
+All 10 tables use a `deleted SMALLINT NOT NULL DEFAULT 0` column constrained to `CHECK (deleted IN (0, 1))`. This replaces the previous `deleted_at TIMESTAMPTZ` approach for three reasons: (1) integer equality checks (`WHERE deleted = 0`) are simpler and more portable than NULL checks; (2) the flag maps naturally to a Java `Short` field with no custom type converter needed; (3) partial indexes on `WHERE deleted = 0` are slightly more compact than on `WHERE deleted_at IS NULL` because the planner can treat the column as a low-cardinality filter. Apply `@SQLRestriction("deleted = 0")` on each entity class (Hibernate 6.3+ annotation) so every repository query automatically filters out soft-deleted rows.
 
 ### 9. Migration tooling
 Manage this schema via **Flyway** versioned migrations. The existing `ddl-auto=update` must be disabled before applying these changes in production to prevent Hibernate from making uncontrolled schema modifications.

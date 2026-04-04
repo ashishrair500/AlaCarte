@@ -1,6 +1,6 @@
 package com.alaCarte.entity;
 
-import com.alaCarte.entity.blueprint.BaseModel;
+import com.alaCarte.entity.blueprint.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,7 +25,7 @@ import java.util.UUID;
 @ToString(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class RestaurantStaff extends BaseModel {
+public class RestaurantStaff extends BaseEntity {
 
     // Links
     @Column(name = "restaurant_id", nullable = false)
@@ -100,4 +100,3 @@ public class RestaurantStaff extends BaseModel {
         }
     }
 }
-
