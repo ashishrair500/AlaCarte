@@ -1,9 +1,9 @@
 package com.alaCarte.superAdmin.controller;
 
-import com.alaCarte.dto.ApiResponse;
-import com.alaCarte.dto.LoginRequest;
-import com.alaCarte.dto.LoginResponse;
-import com.alaCarte.dto.SignupRequest;
+import com.alaCarte.dto.auth.LoginRequest;
+import com.alaCarte.dto.auth.LoginResponse;
+import com.alaCarte.dto.auth.SignupRequest;
+import com.alaCarte.dto.common.ApiResponse;
 import com.alaCarte.entity.SuperAdmin;
 import com.alaCarte.eums.UserRoles;
 import com.alaCarte.jwtUtils.JwtUtils;

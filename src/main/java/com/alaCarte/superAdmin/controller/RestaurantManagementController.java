@@ -1,10 +1,10 @@
 package com.alaCarte.superAdmin.controller;
 
-import com.alaCarte.dto.ApiResponse;
-import com.alaCarte.dto.RestaurantRequest;
-import com.alaCarte.dto.RestaurantResponse;
-import com.alaCarte.dto.RestaurantStaffRequest;
-import com.alaCarte.dto.RestaurantStaffResponse;
+import com.alaCarte.dto.common.ApiResponse;
+import com.alaCarte.dto.restaurant.RestaurantRequest;
+import com.alaCarte.dto.restaurant.RestaurantResponse;
+import com.alaCarte.dto.staff.RestaurantStaffRequest;
+import com.alaCarte.dto.staff.RestaurantStaffResponse;
 import com.alaCarte.entity.Restaurant;
 import com.alaCarte.entity.RestaurantStaff;
 import com.alaCarte.jwtUtils.JwtUtils;
@@ -738,4 +738,3 @@ public class RestaurantManagementController {
                 .build();
     }
 }
-

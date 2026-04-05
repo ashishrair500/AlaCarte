@@ -1,4 +1,4 @@
-package com.alaCarte.dto;
+package com.alaCarte.dto.menu;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

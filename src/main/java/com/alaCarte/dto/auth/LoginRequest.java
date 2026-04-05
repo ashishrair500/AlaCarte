@@ -1,4 +1,4 @@
-package com.alaCarte.dto;
+package com.alaCarte.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,4 +20,3 @@ public class LoginRequest {
     @NotBlank(message = "Password is required")
     private String password;
 }
-

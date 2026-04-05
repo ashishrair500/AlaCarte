@@ -1,8 +1,8 @@
 package com.alaCarte.restaurantAdmin.controller;
 
-import com.alaCarte.dto.ApiResponse;
-import com.alaCarte.dto.LoginRequest;
-import com.alaCarte.dto.LoginResponse;
+import com.alaCarte.dto.auth.LoginRequest;
+import com.alaCarte.dto.auth.LoginResponse;
+import com.alaCarte.dto.common.ApiResponse;
 import com.alaCarte.entity.RestaurantStaff;
 import com.alaCarte.jwtUtils.JwtUtils;
 import com.alaCarte.service.RestaurantStaffService;

@@ -1,4 +1,4 @@
-package com.alaCarte.dto;
+package com.alaCarte.dto.restaurant;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -66,4 +66,3 @@ public class RestaurantResponse {
     private OffsetDateTime updatedAt;
     private UUID createdBy;
 }
-

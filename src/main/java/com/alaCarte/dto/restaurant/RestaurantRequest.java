@@ -1,4 +1,4 @@
-package com.alaCarte.dto;
+package com.alaCarte.dto.restaurant;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -72,4 +72,3 @@ public class RestaurantRequest {
 
     private String status = "open"; // open, closed, temp_closed
 }
-

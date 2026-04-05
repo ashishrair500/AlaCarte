@@ -1,4 +1,4 @@
-package com.alaCarte.dto;
+package com.alaCarte.dto.menu;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

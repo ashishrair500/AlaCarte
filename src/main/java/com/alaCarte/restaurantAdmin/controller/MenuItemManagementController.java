@@ -1,8 +1,8 @@
 package com.alaCarte.restaurantAdmin.controller;
 
-import com.alaCarte.dto.ApiResponse;
-import com.alaCarte.dto.MenuItemRequest;
-import com.alaCarte.dto.MenuItemResponse;
+import com.alaCarte.dto.common.ApiResponse;
+import com.alaCarte.dto.menu.MenuItemRequest;
+import com.alaCarte.dto.menu.MenuItemResponse;
 import com.alaCarte.entity.MenuItem;
 import com.alaCarte.jwtUtils.JwtUtils;
 import com.alaCarte.middlewares.RestaurantAdminMiddleware;

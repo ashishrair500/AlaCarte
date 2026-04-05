@@ -1,4 +1,4 @@
-package com.alaCarte.dto;
+package com.alaCarte.dto.recommendation;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,4 +11,3 @@ public class RecommendationResponse {
     private String recommendation;
     private String reasoning;
 }
-

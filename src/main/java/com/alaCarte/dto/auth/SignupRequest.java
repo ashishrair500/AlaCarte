@@ -1,4 +1,4 @@
-package com.alaCarte.dto;
+package com.alaCarte.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -35,4 +35,3 @@ public class SignupRequest {
 
     private Short roleLevel; // Optional, defaults to 1
 }
-

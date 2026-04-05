@@ -1,4 +1,4 @@
-package com.alaCarte.dto;
+package com.alaCarte.dto.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -49,4 +49,3 @@ public class ApiResponse<T> {
                 .build();
     }
 }
-

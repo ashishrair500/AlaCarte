@@ -1,4 +1,4 @@
-package com.alaCarte.dto;
+package com.alaCarte.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,4 +31,3 @@ public class LoginResponse {
     
     private String message;
 }
-
