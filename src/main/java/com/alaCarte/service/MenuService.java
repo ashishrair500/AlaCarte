@@ -1,350 +1,186 @@
 package com.alaCarte.service;
 
 import com.alaCarte.entity.Menu;
+import com.alaCarte.exception.DuplicateResourceException;
+import com.alaCarte.exception.ResourceNotFoundException;
+import com.alaCarte.menu.dto.request.MenuRequestDTO;
+import com.alaCarte.menu.dto.response.MenuResponseDTO;
+import com.alaCarte.menu.repository.MenuCategoryRepository;
+import com.alaCarte.menu.service.MenuModuleSupportService;
+import com.alaCarte.menu.util.MenuModuleMapper;
+import com.alaCarte.repository.MenuItemRepository;
 import com.alaCarte.repository.MenuRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Service class for Menu CRUD operations
- * Provides business logic for managing restaurant menus
- */
 @Service
+@Transactional
 public class MenuService {
 
+    private static final short NOT_DELETED = 0;
+    private static final short DELETED = 1;
+
     private final MenuRepository menuRepository;
+    private final MenuCategoryRepository menuCategoryRepository;
+    private final MenuItemRepository menuItemRepository;
+    private final MenuModuleSupportService supportService;
+    private final MenuModuleMapper mapper;
 
-    // Constructor injection
-    public MenuService(MenuRepository menuRepository) {
+    public MenuService(
+            MenuRepository menuRepository,
+            MenuCategoryRepository menuCategoryRepository,
+            MenuItemRepository menuItemRepository,
+            MenuModuleSupportService supportService,
+            MenuModuleMapper mapper
+    ) {
         this.menuRepository = menuRepository;
+        this.menuCategoryRepository = menuCategoryRepository;
+        this.menuItemRepository = menuItemRepository;
+        this.supportService = supportService;
+        this.mapper = mapper;
     }
 
-    /**
-     * Create a new menu
-     */
-    @Transactional
-    public Menu createMenu(Menu menu) {
-        // Check if menu with same name already exists for this restaurant
-        if (menuRepository.existsByRestaurantIdAndName(menu.getRestaurantId(), menu.getName())) {
-            throw new RuntimeException("Menu with name '" + menu.getName() + "' already exists for this restaurant");
+    public MenuResponseDTO createMenu(UUID restaurantId, UUID staffId, MenuRequestDTO request) {
+        validateUniqueName(restaurantId, request.getName(), null);
+
+        Menu menu = new Menu();
+        menu.setRestaurantId(restaurantId);
+        menu.setName(request.getName());
+        menu.setDescription(request.getDescription());
+        menu.setMenuType(request.getMenuType());
+        menu.setIsActive(request.getIsActive() == null ? true : request.getIsActive());
+        menu.setValidFrom(request.getValidFrom());
+        menu.setValidTo(request.getValidTo());
+        menu.setDisplayOrder(defaultDisplayOrder(restaurantId, request.getDisplayOrder()));
+        menu.setCoverImage(request.getCoverImage());
+        menu.setCreatedBy(staffId);
+        menu.setUpdatedBy(staffId);
+
+        return toResponse(menuRepository.save(menu));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<MenuResponseDTO> getAllMenus(
+            UUID restaurantId,
+            Pageable pageable,
+            Boolean isActive,
+            String menuType,
+            String search
+    ) {
+        Pageable normalized = supportService.normalizePageable(pageable, "displayOrder");
+        return menuRepository.searchMenus(restaurantId, isActive, menuType, normalize(search), normalized)
+                .map(this::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public MenuResponseDTO getMenuById(UUID restaurantId, UUID menuId) {
+        return toResponse(requireMenu(restaurantId, menuId));
+    }
+
+    public MenuResponseDTO updateMenu(UUID restaurantId, UUID menuId, UUID staffId, MenuRequestDTO request) {
+        Menu menu = requireMenu(restaurantId, menuId);
+        validateUniqueName(restaurantId, request.getName(), menuId);
+
+        menu.setName(request.getName());
+        menu.setDescription(request.getDescription());
+        menu.setMenuType(request.getMenuType());
+        menu.setIsActive(request.getIsActive() == null ? menu.getIsActive() : request.getIsActive());
+        menu.setValidFrom(request.getValidFrom());
+        menu.setValidTo(request.getValidTo());
+        menu.setDisplayOrder(request.getDisplayOrder() == null ? menu.getDisplayOrder() : request.getDisplayOrder());
+        menu.setCoverImage(request.getCoverImage());
+        menu.setUpdatedBy(staffId);
+
+        return toResponse(menuRepository.save(menu));
+    }
+
+    public MenuResponseDTO toggleMenuStatus(UUID restaurantId, UUID menuId, UUID staffId, boolean isActive) {
+        Menu menu = requireMenu(restaurantId, menuId);
+        menu.setIsActive(isActive);
+        menu.setUpdatedBy(staffId);
+        return toResponse(menuRepository.save(menu));
+    }
+
+    public MenuResponseDTO updateDisplayOrder(UUID restaurantId, UUID menuId, UUID staffId, int displayOrder) {
+        Menu menu = requireMenu(restaurantId, menuId);
+        menu.setDisplayOrder(displayOrder);
+        menu.setUpdatedBy(staffId);
+        return toResponse(menuRepository.save(menu));
+    }
+
+    public MenuResponseDTO updateMeta(UUID restaurantId, UUID menuId, UUID staffId, Map<String, Object> meta) {
+        Menu menu = requireMenu(restaurantId, menuId);
+        menu.setMeta(meta);
+        menu.setUpdatedBy(staffId);
+        return toResponse(menuRepository.save(menu));
+    }
+
+    public void deleteMenu(UUID restaurantId, UUID menuId, UUID staffId) {
+        Menu menu = requireMenu(restaurantId, menuId);
+        menu.setDeleted(DELETED);
+        menu.setIsActive(false);
+        menu.setUpdatedBy(staffId);
+        menuRepository.save(menu);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MenuResponseDTO> getCurrentlyValidMenus(UUID restaurantId) {
+        return menuRepository.findCurrentlyValidMenus(restaurantId, OffsetDateTime.now())
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MenuResponseDTO> getSeasonalMenus(UUID restaurantId) {
+        return menuRepository.findSeasonalMenus(restaurantId).stream().map(this::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MenuResponseDTO> getExpiredMenus(UUID restaurantId) {
+        return menuRepository.findExpiredMenus(restaurantId, OffsetDateTime.now()).stream().map(this::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MenuResponseDTO> getUpcomingMenus(UUID restaurantId) {
+        return menuRepository.findUpcomingMenus(restaurantId, OffsetDateTime.now()).stream().map(this::toResponse).toList();
+    }
+
+    private Menu requireMenu(UUID restaurantId, UUID menuId) {
+        return menuRepository.findByIdAndRestaurantIdAndDeleted(menuId, restaurantId, NOT_DELETED)
+                .orElseThrow(() -> new ResourceNotFoundException("Menu", menuId));
+    }
+
+    private void validateUniqueName(UUID restaurantId, String name, UUID excludeId) {
+        boolean exists = excludeId == null
+                ? menuRepository.existsByRestaurantIdAndNameAndDeleted(restaurantId, name, NOT_DELETED)
+                : menuRepository.existsByRestaurantIdAndNameAndDeletedAndIdNot(restaurantId, name, NOT_DELETED, excludeId);
+        if (exists) {
+            throw new DuplicateResourceException("Menu with name '" + name + "' already exists for this restaurant");
         }
-        
-        // Auto-assign display order if not provided
-        if (menu.getDisplayOrder() == null || menu.getDisplayOrder() == 0) {
-            Integer maxOrder = menuRepository.getMaxDisplayOrder(menu.getRestaurantId());
-            menu.setDisplayOrder(maxOrder + 1);
+    }
+
+    private int defaultDisplayOrder(UUID restaurantId, Integer requestedDisplayOrder) {
+        if (requestedDisplayOrder != null && requestedDisplayOrder > 0) {
+            return requestedDisplayOrder;
         }
-        
-        return menuRepository.save(menu);
+        return menuRepository.getMaxDisplayOrder(restaurantId) + 1;
     }
 
-    /**
-     * Get all menus
-     */
-    public List<Menu> getAllMenus() {
-        return menuRepository.findAll();
+    private MenuResponseDTO toResponse(Menu menu) {
+        int totalCategories = (int) menuCategoryRepository.countByMenuIdAndDeleted(menu.getId(), NOT_DELETED);
+        int totalItems = (int) menuItemRepository.countByMenuId(menu.getId());
+        return mapper.toMenuResponse(menu, totalCategories, totalItems);
     }
 
-    /**
-     * Get menu by ID
-     */
-    public Optional<Menu> getMenuById(UUID id) {
-        return menuRepository.findById(id);
-    }
-
-    /**
-     * Get all menus by restaurant ID
-     */
-    public List<Menu> getMenusByRestaurantId(UUID restaurantId) {
-        return menuRepository.findByRestaurantId(restaurantId);
-    }
-
-    /**
-     * Get active menus by restaurant ID
-     */
-    public List<Menu> getActiveMenusByRestaurantId(UUID restaurantId) {
-        return menuRepository.findByRestaurantIdAndIsActiveTrue(restaurantId);
-    }
-
-    /**
-     * Get inactive menus by restaurant ID
-     */
-    public List<Menu> getInactiveMenusByRestaurantId(UUID restaurantId) {
-        return menuRepository.findByRestaurantIdAndIsActiveFalse(restaurantId);
-    }
-
-    /**
-     * Get menus by menu type
-     */
-    public List<Menu> getMenusByType(String menuType) {
-        return menuRepository.findByMenuType(menuType);
-    }
-
-    /**
-     * Get menus by restaurant and menu type
-     */
-    public List<Menu> getMenusByRestaurantAndType(UUID restaurantId, String menuType) {
-        return menuRepository.findByRestaurantIdAndMenuType(restaurantId, menuType);
-    }
-
-    /**
-     * Get active menus by restaurant and menu type
-     */
-    public List<Menu> getActiveMenusByRestaurantAndType(UUID restaurantId, String menuType) {
-        return menuRepository.findActiveByRestaurantIdAndMenuType(restaurantId, menuType);
-    }
-
-    /**
-     * Search menus by name
-     */
-    public List<Menu> searchMenusByName(String name) {
-        return menuRepository.findByNameContainingIgnoreCase(name);
-    }
-
-    /**
-     * Get menus by restaurant ordered by display order
-     */
-    public List<Menu> getMenusByRestaurantOrdered(UUID restaurantId) {
-        return menuRepository.findByRestaurantIdOrderByDisplayOrderAsc(restaurantId);
-    }
-
-    /**
-     * Get active menus by restaurant ordered by display order
-     */
-    public List<Menu> getActiveMenusByRestaurantOrdered(UUID restaurantId) {
-        return menuRepository.findActiveByRestaurantIdOrderedByDisplayOrder(restaurantId);
-    }
-
-    /**
-     * Get currently valid menus (based on date range)
-     */
-    public List<Menu> getCurrentlyValidMenus(UUID restaurantId) {
-        return menuRepository.findCurrentlyValidMenus(restaurantId, OffsetDateTime.now());
-    }
-
-    /**
-     * Get seasonal/time-limited menus
-     */
-    public List<Menu> getSeasonalMenus(UUID restaurantId) {
-        return menuRepository.findSeasonalMenus(restaurantId);
-    }
-
-    /**
-     * Get expired menus
-     */
-    public List<Menu> getExpiredMenus(UUID restaurantId) {
-        return menuRepository.findExpiredMenus(restaurantId, OffsetDateTime.now());
-    }
-
-    /**
-     * Get upcoming menus (not yet valid)
-     */
-    public List<Menu> getUpcomingMenus(UUID restaurantId) {
-        return menuRepository.findUpcomingMenus(restaurantId, OffsetDateTime.now());
-    }
-
-    /**
-     * Get menus created by a specific user
-     */
-    public List<Menu> getMenusCreatedBy(UUID createdBy) {
-        return menuRepository.findByCreatedBy(createdBy);
-    }
-
-    /**
-     * Get menus updated by a specific user
-     */
-    public List<Menu> getMenusUpdatedBy(UUID updatedBy) {
-        return menuRepository.findByUpdatedBy(updatedBy);
-    }
-
-    /**
-     * Count menus by restaurant
-     */
-    public long countMenusByRestaurant(UUID restaurantId) {
-        return menuRepository.countByRestaurantId(restaurantId);
-    }
-
-    /**
-     * Count active menus by restaurant
-     */
-    public long countActiveMenusByRestaurant(UUID restaurantId) {
-        return menuRepository.countByRestaurantIdAndIsActiveTrue(restaurantId);
-    }
-
-    /**
-     * Advanced search with multiple criteria
-     */
-    public List<Menu> searchMenus(UUID restaurantId, Boolean isActive, String menuType, String searchTerm) {
-        return menuRepository.searchMenus(restaurantId, isActive, menuType, searchTerm);
-    }
-
-    /**
-     * Get all active menus across all restaurants
-     */
-    public List<Menu> getAllActiveMenus() {
-        return menuRepository.findAllActiveMenus();
-    }
-
-    /**
-     * Find menus by restaurant and metadata
-     */
-    public List<Menu> getMenusByRestaurantAndMeta(UUID restaurantId, String metaJson) {
-        return menuRepository.findByRestaurantIdAndMeta(restaurantId, metaJson);
-    }
-
-    /**
-     * Update an existing menu
-     */
-    @Transactional
-    public Menu updateMenu(UUID id, Menu updatedMenu, UUID updatedBy) {
-        return menuRepository.findById(id)
-                .map(existingMenu -> {
-                    // Check if name is being changed and if it conflicts
-                    if (!existingMenu.getName().equals(updatedMenu.getName())) {
-                        if (menuRepository.existsByRestaurantIdAndName(
-                                existingMenu.getRestaurantId(), updatedMenu.getName())) {
-                            throw new RuntimeException("Menu with name '" + updatedMenu.getName() + 
-                                    "' already exists for this restaurant");
-                        }
-                    }
-                    
-                    existingMenu.setName(updatedMenu.getName());
-                    existingMenu.setDescription(updatedMenu.getDescription());
-                    existingMenu.setMenuType(updatedMenu.getMenuType());
-                    existingMenu.setIsActive(updatedMenu.getIsActive());
-                    existingMenu.setValidFrom(updatedMenu.getValidFrom());
-                    existingMenu.setValidTo(updatedMenu.getValidTo());
-                    existingMenu.setDisplayOrder(updatedMenu.getDisplayOrder());
-                    existingMenu.setCoverImage(updatedMenu.getCoverImage());
-                    existingMenu.setMeta(updatedMenu.getMeta());
-                    existingMenu.setUpdatedBy(updatedBy);
-                    
-                    return menuRepository.save(existingMenu);
-                })
-                .orElseThrow(() -> new RuntimeException("Menu not found with id: " + id));
-    }
-
-    /**
-     * Partially update menu (only non-null fields)
-     */
-    @Transactional
-    public Menu patchMenu(UUID id, Menu updates, UUID updatedBy) {
-        return menuRepository.findById(id)
-                .map(existing -> {
-                    if (updates.getName() != null) {
-                        if (!existing.getName().equals(updates.getName())) {
-                            if (menuRepository.existsByRestaurantIdAndName(
-                                    existing.getRestaurantId(), updates.getName())) {
-                                throw new RuntimeException("Menu with name '" + updates.getName() + 
-                                        "' already exists for this restaurant");
-                            }
-                        }
-                        existing.setName(updates.getName());
-                    }
-                    if (updates.getDescription() != null) existing.setDescription(updates.getDescription());
-                    if (updates.getMenuType() != null) existing.setMenuType(updates.getMenuType());
-                    if (updates.getIsActive() != null) existing.setIsActive(updates.getIsActive());
-                    if (updates.getValidFrom() != null) existing.setValidFrom(updates.getValidFrom());
-                    if (updates.getValidTo() != null) existing.setValidTo(updates.getValidTo());
-                    if (updates.getDisplayOrder() != null) existing.setDisplayOrder(updates.getDisplayOrder());
-                    if (updates.getCoverImage() != null) existing.setCoverImage(updates.getCoverImage());
-                    if (updates.getMeta() != null) existing.setMeta(updates.getMeta());
-                    
-                    existing.setUpdatedBy(updatedBy);
-                    return menuRepository.save(existing);
-                })
-                .orElseThrow(() -> new RuntimeException("Menu not found with id: " + id));
-    }
-
-    /**
-     * Delete a menu by ID
-     */
-    @Transactional
-    public void deleteMenu(UUID id) {
-        menuRepository.deleteById(id);
-    }
-
-    /**
-     * Soft delete - deactivate menu
-     */
-    @Transactional
-    public Menu deactivateMenu(UUID id, UUID updatedBy) {
-        return menuRepository.findById(id)
-                .map(menu -> {
-                    menu.setIsActive(false);
-                    menu.setUpdatedBy(updatedBy);
-                    return menuRepository.save(menu);
-                })
-                .orElseThrow(() -> new RuntimeException("Menu not found with id: " + id));
-    }
-
-    /**
-     * Reactivate a deactivated menu
-     */
-    @Transactional
-    public Menu activateMenu(UUID id, UUID updatedBy) {
-        return menuRepository.findById(id)
-                .map(menu -> {
-                    menu.setIsActive(true);
-                    menu.setUpdatedBy(updatedBy);
-                    return menuRepository.save(menu);
-                })
-                .orElseThrow(() -> new RuntimeException("Menu not found with id: " + id));
-    }
-
-    /**
-     * Update menu display order
-     */
-    @Transactional
-    public Menu updateDisplayOrder(UUID id, Integer newOrder, UUID updatedBy) {
-        return menuRepository.findById(id)
-                .map(menu -> {
-                    menu.setDisplayOrder(newOrder);
-                    menu.setUpdatedBy(updatedBy);
-                    return menuRepository.save(menu);
-                })
-                .orElseThrow(() -> new RuntimeException("Menu not found with id: " + id));
-    }
-
-    /**
-     * Update menu metadata
-     */
-    @Transactional
-    public Menu updateMeta(UUID id, Map<String, Object> newMeta, UUID updatedBy) {
-        return menuRepository.findById(id)
-                .map(menu -> {
-                    menu.setMeta(newMeta);
-                    menu.setUpdatedBy(updatedBy);
-                    return menuRepository.save(menu);
-                })
-                .orElseThrow(() -> new RuntimeException("Menu not found with id: " + id));
-    }
-
-    /**
-     * Check if a menu exists
-     */
-    public boolean menuExists(UUID id) {
-        return menuRepository.existsById(id);
-    }
-
-    /**
-     * Check if menu name exists for restaurant
-     */
-    public boolean menuNameExists(UUID restaurantId, String name) {
-        return menuRepository.existsByRestaurantIdAndName(restaurantId, name);
-    }
-
-    /**
-     * Count total menus
-     */
-    public long countMenus() {
-        return menuRepository.count();
+    private String normalize(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 }
-

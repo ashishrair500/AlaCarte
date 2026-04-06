@@ -38,6 +38,7 @@ public class SecurityConfig {
                     "/api/superadmin/**",
                     "/api/restaurant-admin/**",
                     "/api/restaurant-admin/staff/**",
+                    "/api/v1/**",
                     "/api/staff/**",
                     "/api/public/**",
                     "/error",
@@ -53,4 +54,3 @@ public class SecurityConfig {
         return http.build();
     }
 }
-

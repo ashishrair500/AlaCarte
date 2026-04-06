@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
@@ -23,6 +24,7 @@ import java.util.UUID;
     @Index(name = "idx_menu_restaurant", columnList = "restaurant_id"),
     @Index(name = "idx_menu_active", columnList = "restaurant_id, is_active")
 })
+@SQLRestriction("deleted = 0")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -67,6 +69,9 @@ public class Menu extends BaseEntity {
     @Column(name = "updated_by")
     private UUID updatedBy;
 
+    @Column(name = "deleted", nullable = false)
+    private Short deleted = 0;
+
     @PrePersist
     protected void onCreate() {
         if (isActive == null) {
@@ -74,6 +79,9 @@ public class Menu extends BaseEntity {
         }
         if (displayOrder == null) {
             displayOrder = 0;
+        }
+        if (deleted == null) {
+            deleted = 0;
         }
     }
 }

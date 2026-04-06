@@ -1,6 +1,8 @@
 package com.alaCarte.repository;
 
 import com.alaCarte.entity.Menu;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,98 +10,106 @@ import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Repository interface for Menu entity
- * Spring Data JPA automatically implements this interface
- */
 @Repository
 public interface MenuRepository extends JpaRepository<Menu, UUID> {
 
-    // Find all menus by restaurant ID
-    List<Menu> findByRestaurantId(UUID restaurantId);
+    Page<Menu> findByRestaurantIdAndDeleted(UUID restaurantId, Short deleted, Pageable pageable);
 
-    // Find active menus by restaurant ID
-    List<Menu> findByRestaurantIdAndIsActiveTrue(UUID restaurantId);
+    List<Menu> findByRestaurantIdAndDeletedOrderByDisplayOrderAsc(UUID restaurantId, Short deleted);
 
-    // Find inactive menus by restaurant ID
-    List<Menu> findByRestaurantIdAndIsActiveFalse(UUID restaurantId);
+    Optional<Menu> findByIdAndRestaurantIdAndDeleted(UUID id, UUID restaurantId, Short deleted);
 
-    // Find by menu type
-    List<Menu> findByMenuType(String menuType);
+    boolean existsByRestaurantIdAndNameAndDeleted(UUID restaurantId, String name, Short deleted);
 
-    // Find by restaurant and menu type
-    List<Menu> findByRestaurantIdAndMenuType(UUID restaurantId, String menuType);
+    boolean existsByRestaurantIdAndNameAndDeletedAndIdNot(UUID restaurantId, String name, Short deleted, UUID id);
 
-    // Find active menus by restaurant and menu type
-    @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND m.menuType = :menuType AND m.isActive = true")
-    List<Menu> findActiveByRestaurantIdAndMenuType(@Param("restaurantId") UUID restaurantId, @Param("menuType") String menuType);
+    long countByRestaurantIdAndDeleted(UUID restaurantId, Short deleted);
 
-    // Find by name (case-insensitive)
-    List<Menu> findByNameContainingIgnoreCase(String name);
+    long countByRestaurantIdAndIsActiveTrueAndDeleted(UUID restaurantId, Short deleted);
 
-    // Find menus by restaurant ordered by display order
-    List<Menu> findByRestaurantIdOrderByDisplayOrderAsc(UUID restaurantId);
+    List<Menu> findByRestaurantIdAndIsActiveTrueAndDeletedOrderByDisplayOrderAsc(UUID restaurantId, Short deleted);
 
-    // Find active menus by restaurant ordered by display order
-    @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND m.isActive = true ORDER BY m.displayOrder ASC")
-    List<Menu> findActiveByRestaurantIdOrderedByDisplayOrder(@Param("restaurantId") UUID restaurantId);
+    List<Menu> findByRestaurantIdAndIsActiveFalseAndDeletedOrderByDisplayOrderAsc(UUID restaurantId, Short deleted);
 
-    // Find currently valid menus (based on date range)
-    @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND m.isActive = true AND " +
-           "(m.validFrom IS NULL OR m.validFrom <= :now) AND (m.validTo IS NULL OR m.validTo >= :now)")
-    List<Menu> findCurrentlyValidMenus(@Param("restaurantId") UUID restaurantId, @Param("now") OffsetDateTime now);
+    List<Menu> findByRestaurantIdAndMenuTypeAndDeleted(UUID restaurantId, String menuType, Short deleted);
 
-    // Find seasonal/time-limited menus
-    @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND (m.validFrom IS NOT NULL OR m.validTo IS NOT NULL)")
-    List<Menu> findSeasonalMenus(@Param("restaurantId") UUID restaurantId);
-
-    // Find expired menus
-    @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND m.validTo < :now")
-    List<Menu> findExpiredMenus(@Param("restaurantId") UUID restaurantId, @Param("now") OffsetDateTime now);
-
-    // Find upcoming menus (not yet valid)
-    @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND m.validFrom > :now")
-    List<Menu> findUpcomingMenus(@Param("restaurantId") UUID restaurantId, @Param("now") OffsetDateTime now);
-
-    // Check if a menu exists by name and restaurant
-    boolean existsByRestaurantIdAndName(UUID restaurantId, String name);
-
-    // Count menus by restaurant
-    long countByRestaurantId(UUID restaurantId);
-
-    // Count active menus by restaurant
-    long countByRestaurantIdAndIsActiveTrue(UUID restaurantId);
-
-    // Find menus created by a specific user
-    List<Menu> findByCreatedBy(UUID createdBy);
-
-    // Find menus updated by a specific user
-    List<Menu> findByUpdatedBy(UUID updatedBy);
-
-    // Get maximum display order for a restaurant (for adding new menus)
-    @Query("SELECT COALESCE(MAX(m.displayOrder), 0) FROM Menu m WHERE m.restaurantId = :restaurantId")
-    Integer getMaxDisplayOrder(@Param("restaurantId") UUID restaurantId);
-
-    // Advanced search with multiple criteria
-    @Query("SELECT m FROM Menu m WHERE m.restaurantId = :restaurantId AND " +
-           "(:isActive IS NULL OR m.isActive = :isActive) AND " +
-           "(:menuType IS NULL OR m.menuType = :menuType) AND " +
-           "(CAST(:searchTerm AS string) IS NULL OR LOWER(m.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    List<Menu> searchMenus(
+    @Query("""
+        SELECT m FROM Menu m
+        WHERE m.restaurantId = :restaurantId
+          AND m.deleted = 0
+          AND (:isActive IS NULL OR m.isActive = :isActive)
+          AND (:menuType IS NULL OR m.menuType = :menuType)
+          AND (:searchTerm IS NULL OR LOWER(m.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
+        """)
+    Page<Menu> searchMenus(
             @Param("restaurantId") UUID restaurantId,
             @Param("isActive") Boolean isActive,
             @Param("menuType") String menuType,
-            @Param("searchTerm") String searchTerm
+            @Param("searchTerm") String searchTerm,
+            Pageable pageable
     );
 
-    // Find all active menus across all restaurants (for global listing)
-    @Query("SELECT m FROM Menu m WHERE m.isActive = true ORDER BY m.restaurantId, m.displayOrder")
+    @Query("""
+        SELECT COALESCE(MAX(m.displayOrder), 0) FROM Menu m
+        WHERE m.restaurantId = :restaurantId
+          AND m.deleted = 0
+        """)
+    Integer getMaxDisplayOrder(@Param("restaurantId") UUID restaurantId);
+
+    @Query("""
+        SELECT m FROM Menu m
+        WHERE m.restaurantId = :restaurantId
+          AND m.deleted = 0
+          AND m.isActive = true
+          AND (m.validFrom IS NULL OR m.validFrom <= :now)
+          AND (m.validTo IS NULL OR m.validTo >= :now)
+        ORDER BY m.displayOrder ASC
+        """)
+    List<Menu> findCurrentlyValidMenus(@Param("restaurantId") UUID restaurantId, @Param("now") OffsetDateTime now);
+
+    @Query("""
+        SELECT m FROM Menu m
+        WHERE m.restaurantId = :restaurantId
+          AND m.deleted = 0
+          AND (m.validFrom IS NOT NULL OR m.validTo IS NOT NULL)
+        ORDER BY m.displayOrder ASC
+        """)
+    List<Menu> findSeasonalMenus(@Param("restaurantId") UUID restaurantId);
+
+    @Query("""
+        SELECT m FROM Menu m
+        WHERE m.restaurantId = :restaurantId
+          AND m.deleted = 0
+          AND m.validTo < :now
+        ORDER BY m.displayOrder ASC
+        """)
+    List<Menu> findExpiredMenus(@Param("restaurantId") UUID restaurantId, @Param("now") OffsetDateTime now);
+
+    @Query("""
+        SELECT m FROM Menu m
+        WHERE m.restaurantId = :restaurantId
+          AND m.deleted = 0
+          AND m.validFrom > :now
+        ORDER BY m.displayOrder ASC
+        """)
+    List<Menu> findUpcomingMenus(@Param("restaurantId") UUID restaurantId, @Param("now") OffsetDateTime now);
+
+    @Query("""
+        SELECT m FROM Menu m
+        WHERE m.deleted = 0
+          AND m.isActive = true
+        ORDER BY m.restaurantId ASC, m.displayOrder ASC
+        """)
     List<Menu> findAllActiveMenus();
 
-    // Custom query to find menus with specific metadata using JSONB
-    @Query(value = "SELECT * FROM menu WHERE restaurant_id = :restaurantId AND meta @> :metaJson::jsonb", nativeQuery = true)
+    @Query(value = """
+        SELECT * FROM menu
+        WHERE restaurant_id = :restaurantId
+          AND deleted = 0
+          AND meta @> CAST(:metaJson AS jsonb)
+        """, nativeQuery = true)
     List<Menu> findByRestaurantIdAndMeta(@Param("restaurantId") UUID restaurantId, @Param("metaJson") String metaJson);
 }
-
