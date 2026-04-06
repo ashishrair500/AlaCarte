@@ -46,7 +46,7 @@ This API allows Restaurant Admins to manage menus, menu items, and staff members
 
 ### 1. Login
 
-**Endpoint**: `POST /api/auth/restaurant-admin/login`
+**Endpoint**: `POST /api/v1/auth/restaurant-admin/login`
 
 **Description**: Authenticate a restaurant admin and receive access and refresh tokens.
 
@@ -79,14 +79,14 @@ This API allows Restaurant Admins to manage menus, menu items, and staff members
 
 ### 2. Refresh Token
 
-**Endpoint**: `POST /api/auth/restaurant-admin/refresh`
+**Endpoint**: `POST /api/v1/auth/restaurant-admin/refresh`
 
 **Description**: Refresh an expired access token using a valid refresh token.
 
 **Query Parameters**:
 - `refreshToken` (required): The refresh token issued during login
 
-**Example**: `POST /api/auth/restaurant-admin/refresh?refreshToken=def50200...`
+**Example**: `POST /api/v1/auth/restaurant-admin/refresh?refreshToken=def50200...`
 
 **Success Response** (200 OK):
 ```json
@@ -103,14 +103,14 @@ This API allows Restaurant Admins to manage menus, menu items, and staff members
 
 ### 3. Validate Token
 
-**Endpoint**: `POST /api/auth/restaurant-admin/validate`
+**Endpoint**: `POST /api/v1/auth/restaurant-admin/validate`
 
 **Description**: Validate an access token and retrieve its payload.
 
 **Query Parameters**:
 - `token` (required): The JWT token to validate
 
-**Example**: `POST /api/auth/restaurant-admin/validate?token=eyJhbGciOi...`
+**Example**: `POST /api/v1/auth/restaurant-admin/validate?token=eyJhbGciOi...`
 
 **Success Response** (200 OK):
 ```json
@@ -128,7 +128,7 @@ This API allows Restaurant Admins to manage menus, menu items, and staff members
 
 ### 4. Get Current User
 
-**Endpoint**: `GET /api/auth/restaurant-admin/me`
+**Endpoint**: `GET /api/v1/auth/restaurant-admin/me`
 
 **Description**: Get information about the currently authenticated restaurant admin.
 
@@ -710,7 +710,7 @@ curl -X PATCH http://localhost:8080/api/restaurant-admin/menu-items/b2c3d4e5-f6a
 
 ### 19. Create Staff
 
-**Endpoint**: `POST /api/restaurant-admin/staff`
+**Endpoint**: `POST /api/v1/restaurant-admin/staff`
 
 **Description**: Create a new staff member.
 
@@ -732,7 +732,7 @@ curl -X PATCH http://localhost:8080/api/restaurant-admin/menu-items/b2c3d4e5-f6a
 
 **cURL Example**:
 ```bash
-curl -X POST http://localhost:8080/api/restaurant-admin/staff \
+curl -X POST http://localhost:8080/api/v1/restaurant-admin/staff \
   -H "Authorization: Bearer <JWT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -764,16 +764,13 @@ curl -X POST http://localhost:8080/api/restaurant-admin/staff \
 
 ### 20. Get All Staff
 
-**Endpoint**: `GET /api/restaurant-admin/staff`
+**Endpoint**: `GET /api/v1/restaurant-admin/staff`
 
-**Description**: Get all staff members for a restaurant.
-
-**Query Parameters**:
-- `restaurantId` (required): ID of the restaurant
+**Description**: Get all staff members for the authenticated restaurant.
 
 **cURL Example**:
 ```bash
-curl -X GET "http://localhost:8080/api/restaurant-admin/staff?restaurantId=550e8400-e29b-41d4-a716-446655440000" \
+curl -X GET "http://localhost:8080/api/v1/restaurant-admin/staff" \
   -H "Authorization: Bearer <JWT_TOKEN>"
 ```
 
@@ -788,13 +785,13 @@ curl -X GET "http://localhost:8080/api/restaurant-admin/staff?restaurantId=550e8
 
 ### 21. Get Staff by ID
 
-**Endpoint**: `GET /api/restaurant-admin/staff/{id}`
+**Endpoint**: `GET /api/v1/restaurant-admin/staff/{id}`
 
 **Description**: Get a staff member by UUID.
 
 **cURL Example**:
 ```bash
-curl -X GET http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-9012-3456-789012cdefgh \
+curl -X GET http://localhost:8080/api/v1/restaurant-admin/staff/c3d4e5f6-a7b8-9012-3456-789012cdefgh \
   -H "Authorization: Bearer <JWT_TOKEN>"
 ```
 
@@ -809,13 +806,13 @@ curl -X GET http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-9012-
 
 ### 22. Update Staff
 
-**Endpoint**: `PUT /api/restaurant-admin/staff/{id}`
+**Endpoint**: `PUT /api/v1/restaurant-admin/staff/{id}`
 
 **Description**: Fully update a staff member.
 
 **cURL Example**:
 ```bash
-curl -X PUT http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-9012-3456-789012cdefgh \
+curl -X PUT http://localhost:8080/api/v1/restaurant-admin/staff/c3d4e5f6-a7b8-9012-3456-789012cdefgh \
   -H "Authorization: Bearer <JWT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -842,13 +839,13 @@ curl -X PUT http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-9012-
 
 ### 23. Patch Staff
 
-**Endpoint**: `PATCH /api/restaurant-admin/staff/{id}`
+**Endpoint**: `PATCH /api/v1/restaurant-admin/staff/{id}`
 
 **Description**: Partially update a staff member.
 
 **cURL Example**:
 ```bash
-curl -X PATCH http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-9012-3456-789012cdefgh \
+curl -X PATCH http://localhost:8080/api/v1/restaurant-admin/staff/c3d4e5f6-a7b8-9012-3456-789012cdefgh \
   -H "Authorization: Bearer <JWT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -867,13 +864,13 @@ curl -X PATCH http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-901
 
 ### 24. Delete Staff
 
-**Endpoint**: `DELETE /api/restaurant-admin/staff/{id}`
+**Endpoint**: `DELETE /api/v1/restaurant-admin/staff/{id}`
 
 **Description**: Delete a staff member.
 
 **cURL Example**:
 ```bash
-curl -X DELETE http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-9012-3456-789012cdefgh \
+curl -X DELETE http://localhost:8080/api/v1/restaurant-admin/staff/c3d4e5f6-a7b8-9012-3456-789012cdefgh \
   -H "Authorization: Bearer <JWT_TOKEN>"
 ```
 
@@ -888,7 +885,7 @@ curl -X DELETE http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-90
 
 ### 25. Update Staff Status
 
-**Endpoint**: `PATCH /api/restaurant-admin/staff/{id}/status`
+**Endpoint**: `PATCH /api/v1/restaurant-admin/staff/{id}/status`
 
 **Description**: Update the status of a staff member.
 
@@ -897,7 +894,7 @@ curl -X DELETE http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-90
 
 **cURL Example**:
 ```bash
-curl -X PATCH "http://localhost:8080/api/restaurant-admin/staff/c3d4e5f6-a7b8-9012-3456-789012cdefgh/status?status=SUSPENDED" \
+curl -X PATCH "http://localhost:8080/api/v1/restaurant-admin/staff/c3d4e5f6-a7b8-9012-3456-789012cdefgh/status?status=SUSPENDED" \
   -H "Authorization: Bearer <JWT_TOKEN>"
 ```
 

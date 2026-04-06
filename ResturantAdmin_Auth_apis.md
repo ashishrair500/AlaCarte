@@ -9,7 +9,7 @@ This document provides `curl` examples for all Restaurant Admin authentication e
 _Authenticate a restaurant admin or manager and obtain access and refresh tokens._
 
 ```bash
-curl -X POST "http://localhost:8080/api/auth/restaurant-admin/login" \
+curl -X POST "http://localhost:8080/api/v1/auth/restaurant-admin/login" \
   -H "Content-Type: application/json" \
   -d '{
     "usernameOrEmail": "admin_yeti",
@@ -24,7 +24,7 @@ curl -X POST "http://localhost:8080/api/auth/restaurant-admin/login" \
 _Obtain a new access token using a valid refresh token._
 
 ```bash
-curl -X POST "http://localhost:8080/api/auth/restaurant-admin/refresh?refreshToken=<YOUR_REFRESH_TOKEN>" \
+curl -X POST "http://localhost:8080/api/v1/auth/restaurant-admin/refresh?refreshToken=<YOUR_REFRESH_TOKEN>" \
   -H "Content-Type: application/json"
 ```
 
@@ -35,7 +35,7 @@ curl -X POST "http://localhost:8080/api/auth/restaurant-admin/refresh?refreshTok
 _Verify if a given token is valid and belongs to the restaurant-admin role._
 
 ```bash
-curl -X POST "http://localhost:8080/api/auth/restaurant-admin/validate?token=<YOUR_ACCESS_TOKEN>" \
+curl -X POST "http://localhost:8080/api/v1/auth/restaurant-admin/validate?token=<YOUR_ACCESS_TOKEN>" \
   -H "Content-Type: application/json"
 ```
 
@@ -46,7 +46,7 @@ curl -X POST "http://localhost:8080/api/auth/restaurant-admin/validate?token=<YO
 _Retrieve the profile and permissions of the currently authenticated restaurant admin._
 
 ```bash
-curl -X GET "http://localhost:8080/api/auth/restaurant-admin/me" \
+curl -X GET "http://localhost:8080/api/v1/auth/restaurant-admin/me" \
   -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>"
 ```
 
